@@ -61,7 +61,7 @@ jobs:
         with:
           go-version: '1.23'
 
-            - name: Install Cross-Compilers for Go (MinGW)
+      - name: Install Cross-Compilers for Go (MinGW)
         if: ${{ inputs.build_go_windows == true || inputs.build_go_windows == 'true' }}
         run: |
           sudo apt-get update -y
