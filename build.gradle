@@ -25,9 +25,6 @@ dependencies {
 	implementation "net.java.dev.jna:jna-platform:5.13.0"
 	include "net.java.dev.jna:jna:5.13.0"
 	include "net.java.dev.jna:jna-platform:5.13.0"
-
-	implementation name: 'ping-display-26.2'
-	include name: 'ping-display-26.2'
 }
 processResources {
 	inputs.property "version", project.version

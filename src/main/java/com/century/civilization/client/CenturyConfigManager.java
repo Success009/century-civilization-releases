@@ -73,6 +73,8 @@ public class CenturyConfigManager {
         // --- Recommended / Native (Enabled by default) ---
         MOD_ENTRIES.add(new ModEntry("sodium", "Sodium", "Recommended / Native", "sodium-fabric-0.9.1+mc26.2.jar", true, "Rendering engine", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("bobby", "Extended Render (Bobby)", "Recommended / Native", "bobby-5.2.15+mc26.2.jar", true, "Render distance extension", List.of("cloth-config")));
+        MOD_ENTRIES.add(new ModEntry("pingdisplay", "Ping Display", "Recommended / Native", "ping-display-26.2.jar", true, "Render ping as milliseconds", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("shulkerboxtooltip", "Shulker Box Tooltip", "Recommended / Native", "shulkerboxtooltip-fabric-5.4.0+26.2.jar", true, "Shulker box contents preview", Collections.emptyList()));
 
         // --- Additional (Disabled by default) ---
         MOD_ENTRIES.add(new ModEntry("voicechat", "Voice Chat", "Additional", "voicechat-fabric-2.6.21+26.2.jar", false, "Proximity voice chat", Collections.emptyList()));

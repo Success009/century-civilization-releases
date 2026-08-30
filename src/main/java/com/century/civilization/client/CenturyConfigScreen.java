@@ -18,10 +18,11 @@ public class CenturyConfigScreen extends Screen {
     }
 
     private int getYForIndex(int i) {
-        if (i < 2) {
-            return 52 + (i * 18);
+        int cardY = 20;
+        if (i < 4) {
+            return cardY + 24 + (i * 18);
         } else {
-            return 106 + ((i - 2) * 18);
+            return cardY + 114 + ((i - 4) * 18);
         }
     }
 
@@ -115,9 +116,9 @@ public class CenturyConfigScreen extends Screen {
 
         // Card background
         int cardWidth = 320;
-        int cardHeight = 232;
+        int cardHeight = 264;
         int cardX = centerX - cardWidth / 2;
-        int cardY = 28;
+        int cardY = 20;
 
         context.fill(cardX, cardY, cardX + cardWidth, cardY + cardHeight, 0xEE0B0B0F);
         
@@ -129,8 +130,8 @@ public class CenturyConfigScreen extends Screen {
         context.fill(cardX + cardWidth, cardY, cardX + cardWidth + 1, cardY + cardHeight, borderColor);
 
         // Category headers
-        context.text(this.font, "§e§l[ Recommended / Native ]", cardX + 10, 36, 0xFFFFFFFF);
-        context.text(this.font, "§e§l[ Additional ]", cardX + 10, 90, 0xFFFFFFFF);
+        context.text(this.font, "§e§l[ Recommended / Native ]", cardX + 10, cardY + 8, 0xFFFFFFFF);
+        context.text(this.font, "§e§l[ Additional ]", cardX + 10, cardY + 98, 0xFFFFFFFF);
 
         // Render mod labels
         List<CenturyConfigManager.ModEntry> entries = CenturyConfigManager.getModEntries();
