@@ -23,12 +23,11 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	implementation "net.java.dev.jna:jna:5.13.0"
 	implementation "net.java.dev.jna:jna-platform:5.13.0"
-		include "net.java.dev.jna:jna:5.13.0"
+	include "net.java.dev.jna:jna:5.13.0"
 	include "net.java.dev.jna:jna-platform:5.13.0"
 
-		
-	// Compile against Simple Voice Chat but do not nest/bake it in the final JAR
-	implementation name: 'voicechat-fabric-2.6.21+26.2'
+	implementation name: 'ping-display-26.2'
+	include name: 'ping-display-26.2'
 }
 processResources {
 	inputs.property "version", project.version
