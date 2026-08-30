@@ -42,13 +42,69 @@ permissions:
   actions: read
 
 jobs:
+  build-macos-native:
+    if: ${{ inputs.build_go_mac == true || inputs.build_go_mac == 'true' }}
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: false
+
+      - name: Compile Native macOS Go Bridges (ARM64 & AMD64 & Universal)
+        run: |
+          cd native_bridge_source
+
+          echo "Compiling macOS ARM64 native bridge (Apple Silicon)..."
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -buildmode=c-shared -o libbridge-darwin-arm64.dylib main.go
+
+          echo "Compiling macOS AMD64 native bridge (Intel)..."
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CGO_CFLAGS="-target x86_64-apple-macos10.13" CGO_LDFLAGS="-target x86_64-apple-macos10.13" go build -buildmode=c-shared -o libbridge-darwin-amd64.dylib main.go
+
+          echo "Creating Universal Fat Mach-O dylib (lipo)..."
+          lipo -create libbridge-darwin-arm64.dylib libbridge-darwin-amd64.dylib -output libbridge-darwin.dylib
+
+          mkdir -p ../macos_binaries
+          cp libbridge-darwin-arm64.dylib libbridge-darwin-amd64.dylib libbridge-darwin.dylib ../macos_binaries/
+
+      - name: Upload macOS Native Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-native-binaries
+          path: macos_binaries/*.dylib
+          retention-days: 1
+
   cloud-build:
+    needs: [build-macos-native]
+    if: always() && !cancelled() && (needs.build-macos-native.result == 'success' || needs.build-macos-native.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Download macOS Native Binaries
+        if: ${{ inputs.build_go_mac == true || inputs.build_go_mac == 'true' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-native-binaries
+          path: temp_macos_bin
+        continue-on-error: true
+
+      - name: Integrate macOS Native Binaries
+        if: ${{ inputs.build_go_mac == true || inputs.build_go_mac == 'true' }}
+        run: |
+          if [ -d temp_macos_bin ]; then
+            BIN_DIR="src/main/resources/assets/century/bin"
+            mkdir -p "$BIN_DIR"
+            cp temp_macos_bin/*.dylib "$BIN_DIR"/
+            rm -rf temp_macos_bin
+          fi
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -70,7 +126,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y gcc-mingw-w64-x86-64
 
-      - name: Build Native Go Bridges
+      - name: Build Native Go Bridges (Linux & Windows)
         if: ${{ inputs.build_go_linux == true || inputs.build_go_linux == 'true' || inputs.build_go_windows == true || inputs.build_go_windows == 'true' }}
         run: |
           BIN_DIR="src/main/resources/assets/century/bin"
