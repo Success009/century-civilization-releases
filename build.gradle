@@ -1,0 +1,48 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+	id 'maven-publish'
+}
+base {
+	archivesName = 'CenturyCivilization'
+}
+
+version = project.mod_version
+group = project.maven_group
+repositories {
+	maven { url "https://maven.parchmentmc.org" }
+	maven { url "https://maven.fabricmc.net/" }
+	flatDir {
+		dir 'libs'
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	// As per 26.1.2 guidelines, use implementation/api instead of modImplementation
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.java.dev.jna:jna:5.13.0"
+	implementation "net.java.dev.jna:jna-platform:5.13.0"
+		include "net.java.dev.jna:jna:5.13.0"
+	include "net.java.dev.jna:jna-platform:5.13.0"
+
+		
+	// Compile against Simple Voice Chat but do not nest/bake it in the final JAR
+	implementation name: 'voicechat-fabric-2.6.21+26.2'
+}
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+it.options.release = 25
+}
+
+java {
+sourceCompatibility = JavaVersion.VERSION_25
+targetCompatibility = JavaVersion.VERSION_25
+}
