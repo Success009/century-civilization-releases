@@ -55,11 +55,14 @@ jobs:
         with:
           java-version: '25'
           distribution: 'oracle'
+          cache: 'gradle'
 
       - name: Set up Go
+        if: ${{ inputs.build_go_linux == true || inputs.build_go_linux == 'true' || inputs.build_go_windows == true || inputs.build_go_windows == 'true' }}
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
+          cache: false
 
       - name: Install Cross-Compilers for Go (MinGW)
         if: ${{ inputs.build_go_windows == true || inputs.build_go_windows == 'true' }}
@@ -68,6 +71,7 @@ jobs:
           sudo apt-get install -y gcc-mingw-w64-x86-64
 
       - name: Build Native Go Bridges
+        if: ${{ inputs.build_go_linux == true || inputs.build_go_linux == 'true' || inputs.build_go_windows == true || inputs.build_go_windows == 'true' }}
         run: |
           BIN_DIR="src/main/resources/assets/century/bin"
           mkdir -p "$BIN_DIR"
@@ -89,7 +93,7 @@ jobs:
       - name: Mode Check - CompileJava Syntax Verification
         if: ${{ inputs.mode == 'check' }}
         run: |
-          ./gradlew compileJava
+          ./gradlew compileJava --build-cache
 
       - name: Multiplatform Compilation & Packaging
         if: ${{ inputs.mode != 'check' }}
@@ -101,7 +105,7 @@ jobs:
           mkdir -p "$OUTPUT_DIR"
 
           echo "Building Master Combined Universal Mod JAR (${VERSION})..."
-          ./gradlew clean build -Pmod_version="${VERSION}"
+          ./gradlew clean build -x test -x check --parallel --build-cache -Pmod_version="${VERSION}"
 
           MASTER_JAR="build/libs/CenturyCivilization-${VERSION}.jar"
           if [ ! -f "$MASTER_JAR" ]; then
@@ -109,10 +113,9 @@ jobs:
             exit 1
           fi
 
-          # 1. Provide Combined Universal Multiplatform JARs
+          # 1. Output the Combined Universal Multiplatform JAR (No untagged duplicates)
           cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-universal.jar"
-          cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}.jar"
-          echo "SUCCESS: Created Combined Universal JARs (Universal & Default)"
+          echo "SUCCESS: Created Combined Universal JAR"
 
           # 2. Fast sub-second packaging for platform-specific compact slices
           if [ "${{ inputs.compile_linux }}" = "true" ]; then
@@ -161,4 +164,4 @@ jobs:
           fi
 
           echo "Publishing new GitHub Release $TAG..."
-          gh release create "$TAG" compiled_jars/*.jar --title "Release $TAG" --notes "Automated GitHub Actions Build" --latest
+          gh release create "$TAG" compiled_jars/*.jar --title "Release $TAG" --notes "Automated GitHub Actions Build v${VERSION}" --latest
