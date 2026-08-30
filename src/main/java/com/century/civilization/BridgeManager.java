@@ -76,43 +76,75 @@ public class BridgeManager {
     }
 
 
-    public static void start() {
+        public static void start() {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+        String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
         isWindows = os.contains("win");
-        
-        String libName = isWindows ? "bridge-windows-amd64" : (os.contains("mac") ? "libbridge-darwin-amd64" : "libbridge-linux-amd64");
-        String extension = isWindows ? ".dll" : (os.contains("mac") ? ".dylib" : ".so");
+        boolean isMac = os.contains("mac") || os.contains("darwin");
 
-        
+        String[] candidateNames;
+        String extension;
+
+        if (isWindows) {
+            extension = ".dll";
+            candidateNames = new String[] { "bridge-windows-amd64", "bridge-windows-x86_64", "bridge-windows" };
+        } else if (isMac) {
+            extension = ".dylib";
+            if (arch.contains("aarch64") || arch.contains("arm")) {
+                candidateNames = new String[] { "libbridge-darwin-arm64", "libbridge-darwin-amd64", "libbridge-darwin" };
+            } else {
+                candidateNames = new String[] { "libbridge-darwin-amd64", "libbridge-darwin-arm64", "libbridge-darwin" };
+            }
+        } else {
+            extension = ".so";
+            if (arch.contains("aarch64") || arch.contains("arm")) {
+                candidateNames = new String[] { "libbridge-linux-arm64", "libbridge-linux-amd64", "libbridge-linux" };
+            } else {
+                candidateNames = new String[] { "libbridge-linux-amd64", "libbridge-linux-x86_64", "libbridge-linux" };
+            }
+        }
+
         try {
             Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "century_bridge_native");
             Files.createDirectories(tempDir);
-            File libFile = tempDir.resolve(libName + extension).toFile();
 
-            // Break the inode link by deleting the file first, preventing SIGBUS on Linux if mapped/in use
+            // Find matching bundled resource
+            InputStream is = null;
+            String matchedName = null;
+            for (String cand : candidateNames) {
+                InputStream stream = BridgeManager.class.getResourceAsStream("/assets/century/bin/" + cand + extension);
+                if (stream != null) {
+                    is = stream;
+                    matchedName = cand;
+                    break;
+                }
+            }
+
+            if (is == null) {
+                loadError = "RES_MISSING";
+                CenturyMod.LOGGER.warn("Native bridge binary not found in mod resources for OS: " + os + " (" + arch + ")");
+                return;
+            }
+
+            File libFile = tempDir.resolve(matchedName + extension).toFile();
+
+            // Break inode link to prevent SIGBUS on Linux if mapped or locked
             if (libFile.exists()) {
                 try {
                     Files.delete(libFile.toPath());
                 } catch (Throwable t) {
-                    // Fallback to unique filename if delete fails (e.g. file lock on Windows)
-                    libFile = tempDir.resolve(libName + "_" + System.currentTimeMillis() + extension).toFile();
+                    libFile = tempDir.resolve(matchedName + "_" + System.currentTimeMillis() + extension).toFile();
                 }
             }
 
-            // Always extract to ensure we have the latest version
-            try (InputStream is = BridgeManager.class.getResourceAsStream("/assets/century/bin/" + libName + extension)) {
-                if (is == null) {
-                    loadError = "RES_MISSING";
-                    return;
-                }
-                Files.copy(is, libFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream inStream = is) {
+                Files.copy(inStream, libFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
 
             try {
                 bridge = Native.load(libFile.getAbsolutePath(), BridgeLib.class);
-
                 bridge.StartProxy(getDecryptedKey());
-                CenturyMod.LOGGER.info("Century Network Layer (Native) initialized successfully.");
+                CenturyMod.LOGGER.info("Century Network Layer (Native) initialized successfully from " + matchedName + extension);
             } catch (Throwable t) {
                 String msg = t.getMessage();
                 if (msg != null && msg.length() > 20) msg = msg.substring(0, 17) + "...";

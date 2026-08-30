@@ -67,27 +67,21 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y gcc-mingw-w64-x86-64
 
-      - name: Build Native Go Bridges
+            - name: Build Native Go Bridges
         run: |
           BIN_DIR="src/main/resources/assets/century/bin"
           mkdir -p "$BIN_DIR"
 
           if [ "${{ inputs.build_go_linux }}" = "true" ]; then
-            echo "Compiling Linux Go Bridge..."
-            cd native_bridge_source
-            CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o libbridge-linux-amd64.so main.go
-            cp libbridge-linux-amd64.so ../"$BIN_DIR"/
-            cd ..
+            echo "Compiling Linux Go Bridge in parallel..."
+            (cd native_bridge_source && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildmode=c-shared -o libbridge-linux-amd64.so main.go && cp libbridge-linux-amd64.so ../"$BIN_DIR"/) &
           fi
 
           if [ "${{ inputs.build_go_windows }}" = "true" ]; then
-            echo "Compiling Windows Go Bridge..."
-            cd native_bridge_source
-            CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -buildmode=c-shared -o bridge-windows-amd64.dll main.go
-            cp bridge-windows-amd64.dll ../"$BIN_DIR"/
-            cp bridge-windows-amd64.h ../"$BIN_DIR"/
-            cd ..
+            echo "Compiling Windows Go Bridge in parallel..."
+            (cd native_bridge_source && CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -buildmode=c-shared -o bridge-windows-amd64.dll main.go && cp bridge-windows-amd64.dll bridge-windows-amd64.h ../"$BIN_DIR"/) &
           fi
+          wait
 
       - name: Grant Execute Permission to Gradle Wrapper
         run: chmod +x gradlew
@@ -97,62 +91,53 @@ jobs:
         run: |
           ./gradlew compileJava
 
-      - name: Multiplatform Compilation
+      - name: Multiplatform Compilation & Packaging
         if: ${{ inputs.mode != 'check' }}
         run: |
           VERSION="${{ inputs.version }}"
           OUTPUT_DIR="compiled_jars"
           BIN_DIR="src/main/resources/assets/century/bin"
-          BACKUP_DIR="temp_native_backup"
 
           mkdir -p "$OUTPUT_DIR"
-          mkdir -p "$BACKUP_DIR"
-          cp -r "$BIN_DIR"/* "$BACKUP_DIR"/ || true
 
-          build_platform_jar() {
-            local platform=$1
-            local binary_name=$2
-            local header_name=$3
+          echo "Building Master Combined Universal Mod JAR (${VERSION})..."
+          ./gradlew clean build -Pmod_version="${VERSION}"
 
-            echo "Building JAR for: $platform ($VERSION)..."
-            rm -rf "$BIN_DIR"
-            mkdir -p "$BIN_DIR"
+          MASTER_JAR="build/libs/CenturyCivilization-${VERSION}.jar"
+          if [ ! -f "$MASTER_JAR" ]; then
+            echo "ERROR: Master JAR output not found at $MASTER_JAR"
+            exit 1
+          fi
 
-            if [ -f "$BACKUP_DIR/$binary_name" ]; then
-              cp "$BACKUP_DIR/$binary_name" "$BIN_DIR/"
-              if [ -n "$header_name" ] && [ -f "$BACKUP_DIR/$header_name" ]; then
-                cp "$BACKUP_DIR/$header_name" "$BIN_DIR/"
-              fi
-            fi
+          # 1. Provide Combined Universal Multiplatform JARs
+          cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-universal.jar"
+          cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}.jar"
+          echo "SUCCESS: Created Combined Universal JARs (Universal & Default)"
 
-            ./gradlew clean build -Pmod_version="${VERSION}"
-            local built_jar="build/libs/CenturyCivilization-${VERSION}.jar"
-            if [ -f "$built_jar" ]; then
-              mv "$built_jar" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-${platform}.jar"
-              echo "SUCCESS: Created ${OUTPUT_DIR}/CenturyCivilization-${VERSION}-${platform}.jar"
-            else
-              echo "ERROR: Missing JAR output"
-              exit 1
-            fi
-          }
-
+          # 2. Fast sub-second packaging for platform-specific compact slices
           if [ "${{ inputs.compile_linux }}" = "true" ]; then
-            build_platform_jar "linux" "libbridge-linux-amd64.so" ""
+            echo "Generating compact Linux JAR..."
+            LINUX_JAR="${OUTPUT_DIR}/CenturyCivilization-${VERSION}-linux.jar"
+            cp "$MASTER_JAR" "$LINUX_JAR"
+            zip -d "$LINUX_JAR" "assets/century/bin/*.dll" "assets/century/bin/*.dylib" "assets/century/bin/*.h" || true
+            echo "SUCCESS: Created compact Linux JAR"
           fi
 
           if [ "${{ inputs.compile_windows }}" = "true" ]; then
-            build_platform_jar "windows" "bridge-windows-amd64.dll" "bridge-windows-amd64.h"
+            echo "Generating compact Windows JAR..."
+            WIN_JAR="${OUTPUT_DIR}/CenturyCivilization-${VERSION}-windows.jar"
+            cp "$MASTER_JAR" "$WIN_JAR"
+            zip -d "$WIN_JAR" "assets/century/bin/*.so" "assets/century/bin/*.dylib" || true
+            echo "SUCCESS: Created compact Windows JAR"
           fi
 
           if [ "${{ inputs.compile_mac }}" = "true" ]; then
-            build_platform_jar "mac" "libbridge-darwin-amd64.dylib" ""
+            echo "Generating compact macOS JAR..."
+            MAC_JAR="${OUTPUT_DIR}/CenturyCivilization-${VERSION}-mac.jar"
+            cp "$MASTER_JAR" "$MAC_JAR"
+            zip -d "$MAC_JAR" "assets/century/bin/*.so" "assets/century/bin/*.dll" "assets/century/bin/*.h" || true
+            echo "SUCCESS: Created compact macOS JAR"
           fi
-
-          # Restore native binaries
-          rm -rf "$BIN_DIR"
-          mkdir -p "$BIN_DIR"
-          cp -r "$BACKUP_DIR"/* "$BIN_DIR"/ || true
-          rm -rf "$BACKUP_DIR"
 
       - name: Upload Build Artifacts
         if: ${{ inputs.mode != 'check' }}
