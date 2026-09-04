@@ -300,3 +300,4 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         }
         return ALLOWED_MODS.contains(sid);
     }
+}
