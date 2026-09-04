@@ -85,6 +85,8 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("moreculling", "More Culling", "Additional", "moreculling-fabric-26.2-1.8.1.jar", false, "Block face culling", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Additional", "litematica-fabric-26.2-0.28.4.jar", false, "Schematic viewer", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("voxy", "Voxy", "Additional", "voxy-0.2.18-beta.jar", false, "Voxel LOD rendering engine", List.of("sodium")));
+        MOD_ENTRIES.add(new ModEntry("iris", "Iris Shaders", "Additional", "iris-fabric-1.11.2+mc26.2.jar", false, "Shaders support", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
         DEPENDENCIES.put("cloth-config", new DependencyMod("cloth-config", "cloth-config-26.2.155.jar"));
         DEPENDENCIES.put("yacl", new DependencyMod("yacl", "yet_another_config_lib_v3-3.9.5+26.2-fabric.jar"));
         DEPENDENCIES.put("kotlin", new DependencyMod("kotlin", "fabric-language-kotlin-1.13.13+kotlin.2.4.10.jar"));

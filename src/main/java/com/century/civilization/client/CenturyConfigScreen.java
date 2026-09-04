@@ -18,7 +18,7 @@ public class CenturyConfigScreen extends Screen {
     }
 
     private int getYForIndex(int i) {
-        int cardY = 20;
+        int cardY = 10;
         if (i < 4) {
             return cardY + 24 + (i * 18);
         } else {
@@ -116,9 +116,9 @@ public class CenturyConfigScreen extends Screen {
 
         // Card background
         int cardWidth = 320;
-        int cardHeight = 264;
+        int cardHeight = 310;
         int cardX = centerX - cardWidth / 2;
-        int cardY = 20;
+        int cardY = 10;
 
         context.fill(cardX, cardY, cardX + cardWidth, cardY + cardHeight, 0xEE0B0B0F);
         
