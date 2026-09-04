@@ -174,12 +174,14 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
     }
 
     public static boolean isClean() {
+        if (!ILLEGAL_MODS_FOUND.isEmpty()) {
+            return false;
+        }
         long now = System.currentTimeMillis();
         if (now - lastCleanCheckTime < 2500) {
             return cachedIsClean;
         }
         lastCleanCheckTime = now;
-
         // Reflection-proof check: re-run the dynamic class signature check on the fly
         ClassLoader cl = JanitorPreLaunch.class.getClassLoader();
         for (String cls : CHEAT_INDICATOR_CLASSES) {
