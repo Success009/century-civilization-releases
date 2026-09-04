@@ -206,7 +206,11 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "transition",
         "voxy",
         "redis_clients_jedis",
-        "jedis"
+        "jedis",
+        "pingdisplay",
+        "shulkerboxtooltip",
+        "shulker-box-tooltip",
+        "shulker_box_tooltip"
     ));
     private static volatile boolean cachedIsClean = true;
     private static volatile long lastCleanCheckTime = 0;
@@ -280,6 +284,11 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
 
     private boolean isAllowed(String id) {
         String sid = id.toLowerCase();
+        for (String blacklisted : Arrays.asList("cheat", "hack", "wurst", "meteor", "liquid", "sigma", "inertia", "impact", "bleach", "thunder", "xray", "exploit")) {
+            if (sid.contains(blacklisted)) {
+                return false;
+            }
+        }
         if (sid.startsWith("fabric") || sid.startsWith("lib") || sid.startsWith("org_") || 
             sid.startsWith("com_") || sid.startsWith("net_") || sid.startsWith("io_") || 
             sid.startsWith("c2me") || sid.contains("language") || sid.contains("kotlin") || 
@@ -291,4 +300,3 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         }
         return ALLOWED_MODS.contains(sid);
     }
-}
