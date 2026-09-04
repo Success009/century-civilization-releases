@@ -149,11 +149,13 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
     };
 
     // Strict list of allowed top/second-level package structures inside mod jars
+    // Strict list of allowed top/second-level package structures inside mod jars
     private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
         "ca/fxco",
         "com/logisticscraft",
         "com/misterpemodder",
         "com/spunkyinsaan",
+        "com/success0",
         "de/johni0702",
         "de/maxhenkel",
         "dev/isxander",
@@ -271,16 +273,17 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                                 while (entries.hasMoreElements()) {
                                     java.util.zip.ZipEntry entry = entries.nextElement();
                                     String entryName = entry.getName();
-                                    if (entryName.endsWith(".class")) {
                                         if (!isClassAllowed(entryName)) {
                                             jarAuthorized = false;
-                                            ILLEGAL_MODS_FOUND.add(f.getName() + " (violates whitelist: " + entryName + ")");
+                                            ILLEGAL_MODS_FOUND.add(f.getName());
                                             LOGGER.warn("Century Security: Unauthorized class/package detected inside " + f.getName() + ": " + entryName);
                                             break;
                                         }
                                     }
                                 }
                             } catch (Throwable t) {
+                                ILLEGAL_MODS_FOUND.add(f.getName());
+                            }
                                 ILLEGAL_MODS_FOUND.add(f.getName() + " (corrupted class structure)");
                             }
                         } catch (Throwable t) {
