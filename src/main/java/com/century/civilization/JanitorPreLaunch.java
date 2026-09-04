@@ -267,14 +267,13 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                             }
 
                             // Verify every class inside the JAR against library whitelist
-                            boolean jarAuthorized = true;
                             try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(canonicalFile)) {
                                 java.util.Enumeration<? extends java.util.zip.ZipEntry> entries = zip.entries();
                                 while (entries.hasMoreElements()) {
                                     java.util.zip.ZipEntry entry = entries.nextElement();
                                     String entryName = entry.getName();
+                                    if (entryName.endsWith(".class")) {
                                         if (!isClassAllowed(entryName)) {
-                                            jarAuthorized = false;
                                             ILLEGAL_MODS_FOUND.add(f.getName());
                                             LOGGER.warn("Century Security: Unauthorized class/package detected inside " + f.getName() + ": " + entryName);
                                             break;
@@ -283,8 +282,6 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                                 }
                             } catch (Throwable t) {
                                 ILLEGAL_MODS_FOUND.add(f.getName());
-                            }
-                                ILLEGAL_MODS_FOUND.add(f.getName() + " (corrupted class structure)");
                             }
                         } catch (Throwable t) {
                             LOGGER.error("Error scanning jar: " + f.getName(), t);
