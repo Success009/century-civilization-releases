@@ -167,6 +167,8 @@ public class CenturyConfigManager {
 
         try {
             Path configFile = resolveConfigFile();
+            if (Files.exists(configFile)) {
+                String jsonStr = Files.readString(configFile, StandardCharsets.UTF_8);
                 JsonObject json = JsonParser.parseString(jsonStr).getAsJsonObject();
                 if (json.has("toggles")) {
                     JsonObject toggles = json.getAsJsonObject("toggles");
