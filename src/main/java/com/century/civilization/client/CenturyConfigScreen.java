@@ -17,12 +17,20 @@ public class CenturyConfigScreen extends Screen {
         this.parent = parent;
     }
 
-    private int getYForIndex(int i) {
-        int cardY = 10;
+    private int getEntryX(int i) {
+        int centerX = this.width / 2;
+        int cardX = centerX - 195; // cardWidth = 390
+        return i < 7 ? (cardX + 145) : (cardX + 340);
+    }
+
+    private int getEntryY(int i) {
+        int cardY = 24;
         if (i < 4) {
             return cardY + 24 + (i * 18);
-        } else {
+        } else if (i < 7) {
             return cardY + 114 + ((i - 4) * 18);
+        } else {
+            return cardY + 24 + ((i - 7) * 18);
         }
     }
 
@@ -35,7 +43,8 @@ public class CenturyConfigScreen extends Screen {
 
         for (int i = 0; i < entries.size(); i++) {
             CenturyConfigManager.ModEntry entry = entries.get(i);
-            int y = getYForIndex(i);
+            int x = getEntryX(i);
+            int y = getEntryY(i);
 
             final CenturyConfigManager.ModEntry currentEntry = entry;
             Button toggleBtn = Button.builder(
@@ -45,7 +54,7 @@ public class CenturyConfigScreen extends Screen {
                     b.setMessage(Component.literal(currentEntry.enabled ? "§aON" : "§cOFF"));
                 }
             )
-            .bounds(centerX + 65, y, 45, 16)
+            .bounds(x, y, 40, 16)
             .build();
 
             this.addRenderableWidget(toggleBtn);
@@ -112,13 +121,13 @@ public class CenturyConfigScreen extends Screen {
         int centerX = this.width / 2;
 
         // Title
-        context.centeredText(this.font, "§e§lCentury Config", centerX, 12, 0xFFFFFFFF);
+        context.centeredText(this.font, "§e§lCentury Config", centerX, 10, 0xFFFFFFFF);
 
-        // Card background
-        int cardWidth = 320;
-        int cardHeight = 310;
+        // Card background (Two columns, width 390, height 185)
+        int cardWidth = 390;
+        int cardHeight = 185;
         int cardX = centerX - cardWidth / 2;
-        int cardY = 10;
+        int cardY = 24;
 
         context.fill(cardX, cardY, cardX + cardWidth, cardY + cardHeight, 0xEE0B0B0F);
         
@@ -132,28 +141,30 @@ public class CenturyConfigScreen extends Screen {
         // Category headers
         context.text(this.font, "§e§l[ Recommended / Native ]", cardX + 10, cardY + 8, 0xFFFFFFFF);
         context.text(this.font, "§e§l[ Additional ]", cardX + 10, cardY + 98, 0xFFFFFFFF);
+        context.text(this.font, "§e§l[ Additional (Cont.) ]", cardX + 205, cardY + 8, 0xFFFFFFFF);
 
         // Render mod labels
         List<CenturyConfigManager.ModEntry> entries = CenturyConfigManager.getModEntries();
 
         for (int i = 0; i < entries.size(); i++) {
             CenturyConfigManager.ModEntry entry = entries.get(i);
-            int y = getYForIndex(i);
+            int y = getEntryY(i);
+            int textX = i < 7 ? (cardX + 12) : (cardX + 205);
 
             String titleText = "§f" + (i + 1) + ". " + entry.name;
-            context.text(this.font, titleText, cardX + 14, y + 3, 0xFFFFFFFF);
+            context.text(this.font, titleText, textX, y + 3, 0xFFFFFFFF);
         }
 
         // Render status / download progress bar
         if (!this.statusMessage.isEmpty()) {
-            context.centeredText(this.font, this.statusMessage, centerX, this.height - 42, 0xFFFFFFFF);
+            context.centeredText(this.font, this.statusMessage, centerX, this.height - 46, 0xFFFFFFFF);
         }
 
         if (CenturyConfigManager.isDownloading()) {
             int pbWidth = 180;
             int pbHeight = 6;
             int pbX = centerX - pbWidth / 2;
-            int pbY = this.height - 52;
+            int pbY = this.height - 56;
 
             context.fill(pbX, pbY, pbX + pbWidth, pbY + pbHeight, 0xFF222222);
             float progress = CenturyConfigManager.getDownloadProgress();

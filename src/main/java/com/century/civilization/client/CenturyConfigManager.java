@@ -147,9 +147,26 @@ public class CenturyConfigManager {
     public static void loadConfig() {
         restartRequired = false; // Reset restartRequired on boot since game has restarted
         try {
+            Path modsDir = resolveModsDir();
+            Path bunkerDir = modsDir.resolve("Bunker");
+            if (Files.exists(modsDir)) {
+                File[] disabledFiles = modsDir.toFile().listFiles((d, name) -> name.endsWith(".disabled"));
+                if (disabledFiles != null) {
+                    for (File df : disabledFiles) {
+                        String originalName = df.getName().substring(0, df.getName().length() - 9);
+                        Path bunkerTarget = bunkerDir.resolve(originalName);
+                        if (!Files.exists(bunkerTarget)) {
+                            df.renameTo(bunkerTarget.toFile());
+                        } else {
+                            df.delete();
+                        }
+                    }
+                }
+            }
+        } catch (Throwable t) {}
+
+        try {
             Path configFile = resolveConfigFile();
-            if (Files.exists(configFile)) {
-                String jsonStr = Files.readString(configFile, StandardCharsets.UTF_8);
                 JsonObject json = JsonParser.parseString(jsonStr).getAsJsonObject();
                 if (json.has("toggles")) {
                     JsonObject toggles = json.getAsJsonObject("toggles");
@@ -221,17 +238,17 @@ public class CenturyConfigManager {
 
                     if (entry.enabled) {
                         if (Files.exists(modPathInBunker) && !Files.exists(modPathInMods)) {
-                            Files.move(modPathInBunker, modPathInMods, StandardCopyOption.REPLACE_EXISTING);
-                            changesMade = true;
-                            LOGGER.info("Moved " + entry.jarName + " from Bunker to mods folder.");
+                            if (safeMoveToMods(modPathInBunker, modPathInMods, modsDir, entry.jarName)) {
+                                changesMade = true;
+                            }
                         } else if (!Files.exists(modPathInMods)) {
                             filesToDownload.add(entry.jarName);
                         }
                     } else {
                         if (Files.exists(modPathInMods)) {
-                            Files.move(modPathInMods, modPathInBunker, StandardCopyOption.REPLACE_EXISTING);
-                            changesMade = true;
-                            LOGGER.info("Moved " + entry.jarName + " from mods folder to Bunker.");
+                            if (safeMoveToBunker(modPathInMods, modPathInBunker, modsDir, entry.jarName)) {
+                                changesMade = true;
+                            }
                         }
                     }
                 }
@@ -245,15 +262,17 @@ public class CenturyConfigManager {
                     boolean shouldBeActive = activeDependencyIds.contains(depId);
                     if (shouldBeActive) {
                         if (Files.exists(depInBunker) && !Files.exists(depInMods)) {
-                            Files.move(depInBunker, depInMods, StandardCopyOption.REPLACE_EXISTING);
-                            changesMade = true;
+                            if (safeMoveToMods(depInBunker, depInMods, modsDir, dep.jarName)) {
+                                changesMade = true;
+                            }
                         } else if (!Files.exists(depInMods)) {
                             filesToDownload.add(dep.jarName);
                         }
                     } else {
                         if (Files.exists(depInMods)) {
-                            Files.move(depInMods, depInBunker, StandardCopyOption.REPLACE_EXISTING);
-                            changesMade = true;
+                            if (safeMoveToBunker(depInMods, depInBunker, modsDir, dep.jarName)) {
+                                changesMade = true;
+                            }
                         }
                     }
                 }
@@ -297,6 +316,57 @@ public class CenturyConfigManager {
         thread.setDaemon(true);
         thread.start();
     }
+
+    private static boolean safeMoveToBunker(Path modPathInMods, Path modPathInBunker, Path modsDir, String jarName) {
+        if (!Files.exists(modPathInMods)) return false;
+        try {
+            Files.move(modPathInMods, modPathInBunker, StandardCopyOption.REPLACE_EXISTING);
+            LOGGER.info("Moved " + jarName + " from mods folder to Bunker.");
+            return true;
+        } catch (Throwable t1) {
+            LOGGER.warn("Direct move to Bunker failed for " + jarName + " (Windows file lock). Applying lock-resilient fallback: " + t1.getMessage());
+            try {
+                if (!Files.exists(modPathInBunker)) {
+                    try {
+                        Files.copy(modPathInMods, modPathInBunker, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (Throwable t2) {}
+                }
+                Path disabledPath = modsDir.resolve(jarName + ".disabled");
+                try {
+                    Files.move(modPathInMods, disabledPath, StandardCopyOption.REPLACE_EXISTING);
+                    LOGGER.info("Staged " + jarName + " as .disabled due to active file lock.");
+                    return true;
+                } catch (Throwable t3) {
+                    modPathInMods.toFile().deleteOnExit();
+                    return true;
+                }
+            } catch (Throwable t4) {
+                LOGGER.error("Fallback staging failed for " + jarName, t4);
+            }
+        }
+        return false;
+    }
+
+    private static boolean safeMoveToMods(Path modPathInBunker, Path modPathInMods, Path modsDir, String jarName) {
+        if (!Files.exists(modPathInBunker)) return false;
+        try {
+            Path disabledPath = modsDir.resolve(jarName + ".disabled");
+            if (Files.exists(disabledPath)) {
+                try { Files.delete(disabledPath); } catch (Throwable t) {}
+            }
+            Files.move(modPathInBunker, modPathInMods, StandardCopyOption.REPLACE_EXISTING);
+            LOGGER.info("Moved " + jarName + " from Bunker to mods folder.");
+            return true;
+        } catch (Throwable t1) {
+            LOGGER.warn("Failed moving " + jarName + " to mods: " + t1.getMessage());
+            try {
+                Files.copy(modPathInBunker, modPathInMods, StandardCopyOption.REPLACE_EXISTING);
+                return true;
+            } catch (Throwable t2) {}
+        }
+        return false;
+    }
+
     private static void downloadModFile(String jarName, Path targetFile) throws Exception {
         String urlStr = GITHUB_MODS_BASE_URL + jarName;
         HttpClient client = HttpClient.newBuilder()
