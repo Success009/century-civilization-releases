@@ -64,7 +64,7 @@ public class AutoUpdater {
                     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
                     if (response.statusCode() == 200) {
                         JsonObject release = JsonParser.parseString(response.body()).getAsJsonObject();
-                        
+
                         String os = System.getProperty("os.name").toLowerCase();
                         String platformSuffix;
                         if (os.contains("win")) {
@@ -93,15 +93,18 @@ public class AutoUpdater {
                             }
 
                             if (downloadUrl != null && assetName != null) {
-                                if (!currentJarName.equalsIgnoreCase(assetName)) {
-                                    CenturyMod.LOGGER.info("[AUTO-UPDATER] Remote JAR differs: " + assetName + " | Initiating silent download...");
+                                int currentVer = parseVersionFromFilename(currentJarName);
+                                int remoteVer = parseVersionFromFilename(assetName);
+
+                                if (remoteVer > currentVer || (!currentJarName.equalsIgnoreCase(assetName) && currentVer == 0)) {
+                                    CenturyMod.LOGGER.info("[AUTO-UPDATER] Newer remote JAR found: " + assetName + " (v" + remoteVer + " > v" + currentVer + ") | Initiating silent download...");
                                     applyUpdate(currentJarFile, downloadUrl, assetName);
                                     if (updateCompleted) {
-                                        CenturyMod.LOGGER.info("[AUTO-UPDATER] Update downloaded. Stopping periodic checks as restart is required.");
+                                        CenturyMod.LOGGER.info("[AUTO-UPDATER] Update downloaded successfully. Stopping periodic checks as restart is required.");
                                         break;
                                     }
                                 } else {
-                                    CenturyMod.LOGGER.info("[AUTO-UPDATER] Mod is up to date (current active JAR matches remote asset).");
+                                    CenturyMod.LOGGER.info("[AUTO-UPDATER] Mod is up to date (current build: " + currentVer + ", remote build: " + remoteVer + ").");
                                 }
                             } else {
                                 CenturyMod.LOGGER.warn("[AUTO-UPDATER] No platform-specific asset found matching suffix: " + platformSuffix);
@@ -115,7 +118,7 @@ public class AutoUpdater {
                 }
 
                 try {
-                    Thread.sleep(180000);
+                    Thread.sleep(60000);
                 } catch (InterruptedException e) {
                     break;
                 }
@@ -123,6 +126,25 @@ public class AutoUpdater {
         });
         thread.setDaemon(true);
         thread.start();
+    }
+
+    private static int parseVersionFromFilename(String verStr) {
+        if (verStr == null) return 0;
+        try {
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("1\\.0\\.(\\d+)").matcher(verStr);
+            if (matcher.find()) {
+                return Integer.parseInt(matcher.group(1));
+            }
+        } catch (Throwable e) {}
+        try {
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(verStr);
+            int lastNum = 0;
+            while (matcher.find()) {
+                lastNum = Integer.parseInt(matcher.group());
+            }
+            return lastNum;
+        } catch (Throwable e) {}
+        return 0;
     }
 
     private static void cleanOldVersions(File currentJarFile) {
@@ -139,9 +161,9 @@ public class AutoUpdater {
                 if (!file.isFile()) continue;
 
                 String name = file.getName();
-                // Clean up any left-over .bak files
-                if (name.startsWith("CenturyCivilization") && name.endsWith(".bak")) {
-                    CenturyMod.LOGGER.info("[AUTO-UPDATER] Self-healing: deleting old backup fragment: " + name);
+                // Clean up any left-over .bak and .tmp fragments
+                if (name.startsWith("CenturyCivilization") && (name.endsWith(".bak") || name.endsWith(".tmp"))) {
+                    CenturyMod.LOGGER.info("[AUTO-UPDATER] Self-healing: deleting old temporary/backup fragment: " + name);
                     file.delete();
                 }
                 // Clean up duplicate inactive .jar files starting with CenturyCivilization
@@ -156,20 +178,38 @@ public class AutoUpdater {
     }
 
     private static void applyUpdate(File currentJarFile, String downloadUrl, String assetName) {
-        try {
-            File modsDirectory = currentJarFile.getParentFile();
-            File targetNewJar = new File(modsDirectory, assetName);
-            File tempDownloadFile = new File(modsDirectory, assetName + ".tmp");
+        File modsDirectory = currentJarFile.getParentFile();
+        File targetNewJar = new File(modsDirectory, assetName);
+        File tempDownloadFile = new File(modsDirectory, assetName + ".tmp");
 
+        try {
             CenturyMod.LOGGER.info("[AUTO-UPDATER] Downloading update to temporary file: " + tempDownloadFile.getAbsolutePath());
             downloadFile(downloadUrl, tempDownloadFile);
 
-            if (tempDownloadFile.renameTo(targetNewJar)) {
-                CenturyMod.LOGGER.info("[AUTO-UPDATER] Silently downloaded new update and finalized JAR: " + assetName);
-                updateCompleted = true;
-            } else {
-                throw new java.io.IOException("Failed to rename temporary download file to final JAR.");
+            // Strict integrity check: verify it is a valid, readable JAR with fabric.mod.json
+            boolean valid = false;
+            try (java.util.jar.JarFile jar = new java.util.jar.JarFile(tempDownloadFile)) {
+                if (jar.getJarEntry("fabric.mod.json") != null) {
+                    valid = true;
+                }
+            } catch (Throwable t) {
+                valid = false;
             }
+
+            if (!valid) {
+                if (tempDownloadFile.exists()) tempDownloadFile.delete();
+                throw new java.io.IOException("Downloaded archive failed integrity verification (corrupt or incomplete jar).");
+            }
+
+            // Atomic file replace using modern standard Files.move
+            java.nio.file.Files.move(
+                tempDownloadFile.toPath(),
+                targetNewJar.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING
+            );
+
+            CenturyMod.LOGGER.info("[AUTO-UPDATER] Silently downloaded new update and finalized JAR: " + assetName);
+            updateCompleted = true;
 
             // Immediate Deletion or Renaming of Self to prevent duplicate mod crashes on next boot
             try {
@@ -192,24 +232,27 @@ public class AutoUpdater {
             }
         } catch (Exception e) {
             CenturyMod.LOGGER.error("[AUTO-UPDATER] Error applying update: " + e.getMessage());
+            if (tempDownloadFile.exists()) {
+                try { tempDownloadFile.delete(); } catch (Throwable ignored) {}
+            }
         }
     }
 
     private static void downloadFile(String fileUrl, File targetFile) throws Exception {
         URI uri = URI.create(fileUrl);
         URL url = uri.toURL();
-        int maxBytesPerSecond = 150 * 1024; // Throttled to 150 KB/s to prevent network lag
+        int maxBytesPerSecond = 500 * 1024; // Throttled to 500 KB/s to balance high-speed download with zero gameplay jitter
         try (InputStream in = new BufferedInputStream(url.openStream());
-             FileOutputStream out = new FileOutputStream(targetFile)) {
-            byte[] buffer = new byte[4096];
+             FileOutputStream out = new FileOutputStream(targetFile, false)) { // false ensures truncation from scratch
+            byte[] buffer = new byte[8192];
             int bytesRead;
             long startTime = System.currentTimeMillis();
             long totalBytesRead = 0;
-            
+
             while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
                 totalBytesRead += bytesRead;
-                
+
                 long elapsedTime = System.currentTimeMillis() - startTime;
                 if (elapsedTime > 0) {
                     double expectedMs = (double) totalBytesRead / ((double) maxBytesPerSecond / 1000.0);
@@ -219,6 +262,13 @@ public class AutoUpdater {
                     }
                 }
             }
+            out.flush();
+        } catch (Throwable t) {
+            // Guarantee no corrupt partial file is left on disk if connection drops
+            if (targetFile.exists()) {
+                try { targetFile.delete(); } catch (Throwable ignored) {}
+            }
+            throw t;
         }
     }
 

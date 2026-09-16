@@ -44,6 +44,16 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                 return false;
             }
 
+            // Clean up any incomplete temporary download fragments leftover from aborted downloads
+            java.io.File[] tmpFiles = modsDir.listFiles((dir, name) ->
+                (name.startsWith("CenturyCivilization") || name.startsWith("CentoryCivilization")) && name.endsWith(".tmp")
+            );
+            if (tmpFiles != null) {
+                for (java.io.File tmp : tmpFiles) {
+                    try { tmp.delete(); } catch (Throwable ignored) {}
+                }
+            }
+
             int ourVersion = getModVersionFromJar(ourJar);
 
             java.io.File[] files = modsDir.listFiles((dir, name) -> 
@@ -63,6 +73,20 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                 }
 
                 int otherVersion = getModVersionFromJar(otherJar);
+
+                // If the other jar is corrupt or truncated, delete it and never defer to it
+                if (otherVersion == -1) {
+                    LOGGER.warn("[DUPLICATE-CLEANER] Corrupted mod jar detected: " + otherJar.getName() + " -> deleting");
+                    try {
+                        if (!otherJar.delete()) {
+                            java.io.File bakFile = new java.io.File(modsDir, otherJar.getName() + ".corrupt");
+                            otherJar.renameTo(bakFile);
+                        }
+                    } catch (Throwable t) {
+                        otherJar.deleteOnExit();
+                    }
+                    continue;
+                }
 
                 if (ourVersion < otherVersion) {
                     weAreLesser = true;
@@ -112,8 +136,11 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                     }
                 }
             }
-        } catch (Throwable e) {}
-        return parseVersionToBuildNumber(jarFile.getName());
+            return parseVersionToBuildNumber(jarFile.getName());
+        } catch (Throwable e) {
+            // Archive is corrupt or unreadable: return -1 to signal invalid file
+            return -1;
+        }
     }
 
     private static int parseVersionToBuildNumber(String verStr) {
