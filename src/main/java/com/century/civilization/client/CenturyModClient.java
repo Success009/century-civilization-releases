@@ -48,10 +48,10 @@ public class CenturyModClient implements ClientModInitializer {
     private static String authenticatedUsername = "";
     private static String authToken = "";
     private static String userRole = "";
+    private static net.minecraft.client.User cachedUser = null;
     private static boolean sessionLoaded = false;
-    private static Identifier loadedSkinIdentifier = null;
+    private static net.minecraft.resources.Identifier loadedSkinIdentifier = null;
     private static boolean skinDownloadStarted = false;
-
         @Override
     public void onInitializeClient() {
         if (JanitorPreLaunch.isDisabled()) {
