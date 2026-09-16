@@ -33,8 +33,8 @@ public class CenturyModClient implements ClientModInitializer {
     public static final int SERVER_PORT = 25565;
     public static final String PROXY_IP = "mauritania-allied.tun.ply.gg";
     public static final int PROXY_PORT = 25565;
-    public static final String CREATIVE_IP = "nicely-alameda.tun.ply.gg";
-    public static final int CREATIVE_PORT = 17612;
+    public static final String CREATIVE_IP = "mc2164843.fmcs.cloud";
+    public static final int CREATIVE_PORT = 26092;
     public static final String API_BASE_URL = "https://century.success0.com.np";
 
     public enum ConnectionMode {
