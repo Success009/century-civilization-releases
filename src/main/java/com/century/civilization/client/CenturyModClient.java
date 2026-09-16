@@ -44,8 +44,8 @@ public class CenturyModClient implements ClientModInitializer {
     }
 
     private static ConnectionMode connectionMode = ConnectionMode.DIRECT;
+    private static boolean loggedIn = false;
     private static String authenticatedUsername = "";
-    private static String authToken = "";
     private static String userRole = "";
     private static User cachedUser = null;
     private static boolean sessionLoaded = false;
