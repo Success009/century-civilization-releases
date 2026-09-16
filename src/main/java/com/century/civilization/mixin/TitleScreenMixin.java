@@ -314,7 +314,7 @@ public class TitleScreenMixin extends Screen {
             if (!clean) {
                 connectionDisplay = "§cDisabled (Locked)";
             } else if (mode == CenturyModClient.ConnectionMode.CREATIVE) {
-                connectionDisplay = "§dCreative Testing Realm";
+                connectionDisplay = "§dCreative";
             } else if (mode == CenturyModClient.ConnectionMode.PROXY) {
                 connectionDisplay = "§6Proxy Relay";
             } else if (status != null && status.startsWith("FORWARDED:")) {

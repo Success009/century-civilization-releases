@@ -45,7 +45,7 @@ public class PauseScreenMixin extends Screen {
             if (!clean) {
                 connectionDisplay = "§cDisabled (Locked)";
             } else if (mode == com.century.civilization.client.CenturyModClient.ConnectionMode.CREATIVE) {
-                connectionDisplay = "§dCreative Testing Realm";
+                connectionDisplay = "§dCreative";
             } else if (mode == com.century.civilization.client.CenturyModClient.ConnectionMode.PROXY) {
                 connectionDisplay = "§6Proxy";
             } else if (status != null && status.startsWith("FORWARDED:")) {
