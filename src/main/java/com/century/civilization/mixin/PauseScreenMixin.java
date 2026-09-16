@@ -41,9 +41,12 @@ public class PauseScreenMixin extends Screen {
             boolean clean = JanitorPreLaunch.isClean();
 
             String connectionDisplay;
-                        if (!clean) {
+            com.century.civilization.client.CenturyModClient.ConnectionMode mode = com.century.civilization.client.CenturyModClient.getConnectionMode();
+            if (!clean) {
                 connectionDisplay = "§cDisabled (Locked)";
-            } else if (com.century.civilization.client.CenturyModClient.isUseDirectLink()) {
+            } else if (mode == com.century.civilization.client.CenturyModClient.ConnectionMode.CREATIVE) {
+                connectionDisplay = "§dCreative Testing Realm";
+            } else if (mode == com.century.civilization.client.CenturyModClient.ConnectionMode.PROXY) {
                 connectionDisplay = "§6Proxy";
             } else if (status != null && status.startsWith("FORWARDED:")) {
                 String relay = status.substring("FORWARDED:".length());

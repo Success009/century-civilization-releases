@@ -31,10 +31,19 @@ public class CenturyModClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("century-mod-client");
     public static final String SERVER_IP = "127.0.0.1";
     public static final int SERVER_PORT = 25565;
+    public static final String PROXY_IP = "mauritania-allied.tun.ply.gg";
+    public static final int PROXY_PORT = 25565;
+    public static final String CREATIVE_IP = "mc2164843.fmcs.cloud";
+    public static final int CREATIVE_PORT = 26092;
     public static final String API_BASE_URL = "https://century.success0.com.np";
 
-        private static boolean useDirectLink = false;
-    private static boolean loggedIn = false;
+    public enum ConnectionMode {
+        DIRECT,
+        PROXY,
+        CREATIVE
+    }
+
+    private static ConnectionMode connectionMode = ConnectionMode.DIRECT;
     private static String authenticatedUsername = "";
     private static String authToken = "";
     private static String userRole = "";
@@ -413,12 +422,30 @@ public class CenturyModClient implements ClientModInitializer {
         return Identifier.fromNamespaceAndPath("minecraft", "textures/entity/steve.png");
     }
 
+    public static ConnectionMode getConnectionMode() {
+        return connectionMode;
+    }
+
+    public static void setConnectionMode(ConnectionMode mode) {
+        connectionMode = mode;
+        saveNetworkConfig();
+    }
+
+    public static void cycleConnectionMode() {
+        connectionMode = switch (connectionMode) {
+            case DIRECT -> ConnectionMode.PROXY;
+            case PROXY -> ConnectionMode.CREATIVE;
+            case CREATIVE -> ConnectionMode.DIRECT;
+        };
+        saveNetworkConfig();
+    }
+
     public static boolean isUseDirectLink() {
-        return useDirectLink;
+        return connectionMode == ConnectionMode.PROXY;
     }
 
     public static void setUseDirectLink(boolean val) {
-        useDirectLink = val;
+        connectionMode = val ? ConnectionMode.PROXY : ConnectionMode.DIRECT;
         saveNetworkConfig();
     }
 
@@ -428,8 +455,14 @@ public class CenturyModClient implements ClientModInitializer {
             if (Files.exists(path)) {
                 String content = Files.readString(path, StandardCharsets.UTF_8);
                 JsonObject obj = JsonParser.parseString(content).getAsJsonObject();
-                if (obj.has("useDirectLink")) {
-                    useDirectLink = obj.get("useDirectLink").getAsBoolean();
+                if (obj.has("connectionMode")) {
+                    try {
+                        connectionMode = ConnectionMode.valueOf(obj.get("connectionMode").getAsString());
+                    } catch (Exception ignored) {
+                        connectionMode = ConnectionMode.DIRECT;
+                    }
+                } else if (obj.has("useDirectLink")) {
+                    connectionMode = obj.get("useDirectLink").getAsBoolean() ? ConnectionMode.PROXY : ConnectionMode.DIRECT;
                 }
             }
         } catch (Exception e) {
@@ -441,7 +474,8 @@ public class CenturyModClient implements ClientModInitializer {
         try {
             Path path = resolveNetworkConfigPath();
             JsonObject obj = new JsonObject();
-            obj.addProperty("useDirectLink", useDirectLink);
+            obj.addProperty("connectionMode", connectionMode.name());
+            obj.addProperty("useDirectLink", connectionMode == ConnectionMode.PROXY);
             Files.writeString(path, obj.toString(), StandardCharsets.UTF_8);
         } catch (Exception e) {
             LOGGER.error("Failed to save network config", e);
@@ -466,18 +500,28 @@ public class CenturyModClient implements ClientModInitializer {
     public static void joinServer(Screen parent) {
         String host = SERVER_IP;
         int port = SERVER_PORT;
+        String serverName = "Century Server";
 
-        if (useDirectLink) {
-            host = "mauritania-allied.tun.ply.gg";
-            port = 25565;
-            LOGGER.info("Direct Link selected. Routing connection directly to " + host + ":" + port);
-        } else {
-            LOGGER.info("Secure Tunnel selected. Routing connection via local bridge at " + host + ":" + port);
+        switch (connectionMode) {
+            case PROXY -> {
+                host = PROXY_IP;
+                port = PROXY_PORT;
+                LOGGER.info("Proxy Link selected. Routing connection directly to " + host + ":" + port);
+            }
+            case CREATIVE -> {
+                host = CREATIVE_IP;
+                port = CREATIVE_PORT;
+                serverName = "Century Creative";
+                LOGGER.info("Creative Server selected. Routing connection directly to " + host + ":" + port);
+            }
+            case DIRECT -> {
+                LOGGER.info("Secure Tunnel selected. Routing connection via local bridge at " + host + ":" + port);
+            }
         }
 
         Minecraft client = Minecraft.getInstance();
         ServerAddress serverAddress = new ServerAddress(host, port);
-        ServerData serverData = new ServerData("Century Server", "century.internal.gateway", ServerData.Type.REALM);
+        ServerData serverData = new ServerData(serverName, "century.internal.gateway", ServerData.Type.REALM);
         LOGGER.info("Created ServerData with dummy address for secure routing.");
         ConnectScreen.startConnecting(parent, client, serverAddress, serverData, true, null);
     }

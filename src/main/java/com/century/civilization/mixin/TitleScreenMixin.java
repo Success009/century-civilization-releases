@@ -42,8 +42,17 @@ public class TitleScreenMixin extends Screen {
         super(title);
     }
 
+    @org.spongepowered.asm.mixin.Unique
+    private Component getRouteButtonText() {
+        CenturyModClient.ConnectionMode mode = CenturyModClient.getConnectionMode();
+        return switch (mode) {
+            case DIRECT -> Component.literal("§7Route: §a§lDIRECT");
+            case PROXY -> Component.literal("§7Route: §e§lPROXY");
+            case CREATIVE -> Component.literal("§7Route: §d§lCREATIVE");
+        };
+    }
+
     @Inject(at = @At("RETURN"), method = "init")
-    private void onInit(CallbackInfo ci) {
         // Load session if not loaded yet
         CenturyModClient.loadSessionIfNeeded();
 
@@ -165,22 +174,12 @@ public class TitleScreenMixin extends Screen {
         })
         .bounds(px, 56, 120, 16)
         .build());
-
-        Component netText = CenturyModClient.isUseDirectLink() ?
-            Component.literal("§7Route: §e§lPROXY") :
-            Component.literal("§7Route: §a§lDIRECT");
-
-        this.networkModeButton = this.addRenderableWidget(Button.builder(netText, (b) -> {
-            boolean current = CenturyModClient.isUseDirectLink();
-            CenturyModClient.setUseDirectLink(!current);
-            b.setMessage(CenturyModClient.isUseDirectLink() ?
-                Component.literal("§7Route: §e§lPROXY") :
-                Component.literal("§7Route: §a§lDIRECT")
-            );
+        this.networkModeButton = this.addRenderableWidget(Button.builder(getRouteButtonText(), (b) -> {
+            CenturyModClient.cycleConnectionMode();
+            b.setMessage(getRouteButtonText());
         })
         .bounds(px, 74, 120, 16)
         .build());
-
         this.updateWidgetVisibility();
     }
 
@@ -312,17 +311,19 @@ public class TitleScreenMixin extends Screen {
                         // STATE_LOBBY (Logged In)
             String status = BridgeManager.getStatus();
             String connectionDisplay;
-                        if (!clean) {
+            CenturyModClient.ConnectionMode mode = CenturyModClient.getConnectionMode();
+            if (!clean) {
                 connectionDisplay = "§cDisabled (Locked)";
-            } else if (CenturyModClient.isUseDirectLink()) {
-                connectionDisplay = "§6Proxy";
+            } else if (mode == CenturyModClient.ConnectionMode.CREATIVE) {
+                connectionDisplay = "§dCreative Testing Realm";
+            } else if (mode == CenturyModClient.ConnectionMode.PROXY) {
+                connectionDisplay = "§6Proxy Relay";
             } else if (status != null && status.startsWith("FORWARDED:")) {
                 String relay = status.substring("FORWARDED:".length());
                 connectionDisplay = "§6Relay (" + relay + ")";
             } else {
                 connectionDisplay = "§aDirect Connection";
             }
-
             context.centeredText(this.font, "§7Connection: " + connectionDisplay, centerX, centerY - 11, 0xFFFFFFFF);
 
                                                 if (com.century.civilization.client.AutoUpdater.isUpdateCompleted()) {
