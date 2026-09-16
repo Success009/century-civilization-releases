@@ -51,11 +51,10 @@ public class TitleScreenMixin extends Screen {
             case CREATIVE -> Component.literal("§7Route: §d§lCREATIVE");
         };
     }
-
     @Inject(at = @At("RETURN"), method = "init")
+    private void onInit(CallbackInfo ci) {
         // Load session if not loaded yet
         CenturyModClient.loadSessionIfNeeded();
-
         for (Renderable drawable : ((ScreenAccessor)this).getDrawables()) {
             if (drawable instanceof AbstractWidget widget) {
                 widget.visible = false;
