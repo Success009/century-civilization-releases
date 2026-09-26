@@ -6,11 +6,14 @@ package main
 import "C"
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -21,18 +24,19 @@ import (
 )
 
 var (
-	server *tsnet.Server
-	ready  bool
-	status string = "INITIALIZING"
-	mu     sync.Mutex
+	server        *tsnet.Server
+	ghostListener net.Listener
+	udpConn       *net.UDPConn
+	ready         bool
+	status        string = "INITIALIZING"
+	mu            sync.Mutex
 
 	activeRemoteAddr string = "100.89.137.102:25565" // Default to Node 1 Main Stage (port 25565)
 	activeMu         sync.Mutex
 
-	
 	// Phase 4: XOR Obfuscated Key
 	// XOR Key: "SajiloSystem_Network"
-	obfuscatedKey = [ ]byte{
+	obfuscatedKey = []byte{
 		0x27, 0x12, 0x01, 0x0c, 0x15, 0x42, 0x32, 0x0c, 0x07, 0x1c, 0x48, 0x06, 0x05, 0x02, 0x12, 0x25,
 		0x31, 0x3a, 0x39, 0x31, 0x04, 0x50, 0x5b, 0x2a, 0x22, 0x3b, 0x01, 0x35, 0x5e, 0x27, 0x24, 0x0b,
 		0x2d, 0x0b, 0x0d, 0x42, 0x14, 0x25, 0x3a, 0x03, 0x6b, 0x2f, 0x3a, 0x58, 0x3f, 0x3a, 0x04, 0x16,
@@ -47,13 +51,26 @@ const (
 
 func getAuthKey() string {
 	xorKey := "SajiloSystem_Network"
-	result := make([ ]byte, len(obfuscatedKey))
+	result := make([]byte, len(obfuscatedKey))
 	for i := 0; i < len(obfuscatedKey); i++ {
 		result[i] = obfuscatedKey[i] ^ xorKey[i%len(xorKey)]
 	}
 	return string(result)
 }
 
+func getUniqueNodeName() string {
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		host = "client"
+	}
+	cleanHost := regexp.MustCompile(`[^a-zA-Z0-9-]`).ReplaceAllString(host, "")
+	if len(cleanHost) > 10 {
+		cleanHost = cleanHost[:10]
+	}
+	h := sha256.Sum256([]byte(cleanHost + host))
+	shortHash := hex.EncodeToString(h[:2])
+	return "nml-" + strings.ToLower(cleanHost) + "-" + shortHash
+}
 
 func initLog() {
 	dir, err := os.UserCacheDir()
@@ -84,7 +101,28 @@ func StartProxy(cKey *C.char) {
 	log.Printf("Starting bridge with key length: %d\n", len(key))
 	go runBridge(key)
 }
-    
+
+//export StopProxy
+func StopProxy() {
+	mu.Lock()
+	defer mu.Unlock()
+	ready = false
+	status = "STOPPED"
+
+	if ghostListener != nil {
+		_ = ghostListener.Close()
+		ghostListener = nil
+	}
+	if udpConn != nil {
+		_ = udpConn.Close()
+		udpConn = nil
+	}
+	if server != nil {
+		_ = server.Close()
+		server = nil
+	}
+	log.Println("[Bridge] Clean shutdown performed.")
+}
 
 //export IsReady
 func IsReady() C.int {
@@ -126,38 +164,63 @@ func UpdateRemoteAddr(cTarget *C.char) {
 
 func runBridge(key string) {
 	initLog()
-	log.Println("--- SECURE NETWORK LAYER STARTING ---")
+	log.Println("--- SECURE HIGH-PERFORMANCE NETWORK LAYER STARTING ---")
 
-	// Force login to prevent "NoState" hang
 	os.Setenv("TSNET_FORCE_LOGIN", "1")
 
 	dir, _ := os.UserCacheDir()
 	tsDir := filepath.Join(dir, "NML_Member_State")
-	os.MkdirAll(tsDir, 0755)
+	_ = os.MkdirAll(tsDir, 0755)
 
+	hostname := getUniqueNodeName()
+	log.Printf("[Bridge] Assigned unique client hostname: %s\n", hostname)
+
+	// Suppress verbose packet logging to avoid excessive disk I/O bottlenecks
+	quietLogger := func(format string, args ...any) {
+		if strings.Contains(format, "error") || strings.Contains(format, "failed") || strings.Contains(format, "panic") {
+			log.Printf(format, args...)
+		}
+	}
+
+	// Attempt binding WireGuard default UDP 41641 for optimal firewall/UPnP matching
 	server = &tsnet.Server{
 		AuthKey:   key,
 		Dir:       tsDir,
-		Hostname:  "NML-Phoenix",
-		Logf:      log.Printf,
+		Hostname:  hostname,
+		Logf:      quietLogger,
 		Ephemeral: true,
+		Port:      41641,
 	}
 
 	errTCP := startGhostListener(targetIP+":25565", remoteIP+":25565")
 	if errTCP != nil {
 		updateStatus("FATAL_PORT_BIND")
+		log.Printf("[Bridge] Fatal port bind on TCP 25565: %v\n", errTCP)
 		return
 	}
 
 	go startUDPSessionManager(targetIP+":24454", remoteIP+":24454")
 
 	if err := server.Start(); err != nil {
-		updateStatus("START_FAILED")
-		return
+		log.Printf("[Bridge] Port 41641 occupied (%v), retrying with dynamic port...\n", err)
+		_ = server.Close()
+		server = &tsnet.Server{
+			AuthKey:   key,
+			Dir:       tsDir,
+			Hostname:  hostname,
+			Logf:      quietLogger,
+			Ephemeral: true,
+			Port:      0,
+		}
+		if err := server.Start(); err != nil {
+			updateStatus("START_FAILED")
+			log.Printf("[Bridge] Failed to start tsnet server: %v\n", err)
+			return
+		}
 	}
 
-	for {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	for i := 0; i < 15; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 		log.Println("Syncing network state...")
 		st, err := server.Up(ctx)
 		cancel()
@@ -166,11 +229,11 @@ func runBridge(key string) {
 			ready = true
 			status = "STABLE"
 			mu.Unlock()
-			log.Println(">>> GATEWAY ONLINE <<<")
+			log.Println(">>> HIGH-SPEED DIRECT GATEWAY ONLINE <<<")
 			go monitorConnection()
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -185,37 +248,65 @@ func startGhostListener(localAddr, defaultRemoteAddr string) error {
 	if err != nil {
 		return err
 	}
+	ghostListener = l
+
 	go func() {
 		for {
 			client, err := l.Accept()
 			if err != nil {
-				continue
+				return
 			}
 			go func(c net.Conn) {
 				defer c.Close()
+				if tc, ok := c.(*net.TCPConn); ok {
+					_ = tc.SetNoDelay(true)
+					_ = tc.SetKeepAlive(true)
+					_ = tc.SetReadBuffer(64 * 1024)
+					_ = tc.SetWriteBuffer(64 * 1024)
+				}
+
 				for i := 0; i < 60; i++ {
 					if isBridgeReady() {
 						break
 					}
-					time.Sleep(500 * time.Millisecond)
+					time.Sleep(200 * time.Millisecond)
 				}
 				if !isBridgeReady() {
 					return
 				}
+
 				activeMu.Lock()
 				remoteAddr := activeRemoteAddr
 				activeMu.Unlock()
+
 				ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				defer cancel()
+
 				remote, err := server.Dial(ctx, "tcp", remoteAddr)
 				if err != nil {
 					return
 				}
+				defer remote.Close()
+
+				if tr, ok := remote.(*net.TCPConn); ok {
+					_ = tr.SetNoDelay(true)
+					_ = tr.SetKeepAlive(true)
+					_ = tr.SetReadBuffer(64 * 1024)
+					_ = tr.SetWriteBuffer(64 * 1024)
+				}
+
 				done := make(chan struct{}, 2)
-				go func() { io.Copy(remote, c); done <- struct{}{} }()
-				go func() { io.Copy(c, remote); done <- struct{}{} }()
+				go func() {
+					buf := make([]byte, 32*1024)
+					_, _ = io.CopyBuffer(remote, c, buf)
+					done <- struct{}{}
+				}()
+				go func() {
+					buf := make([]byte, 32*1024)
+					_, _ = io.CopyBuffer(c, remote, buf)
+					done <- struct{}{}
+				}()
 				<-done
-				remote.Close()
 			}(client)
 		}
 	}()
@@ -234,17 +325,24 @@ func startUDPSessionManager(localAddr, remoteAddr string) {
 	if err != nil {
 		return
 	}
+	udpConn = conn
+
 	var remoteConn net.Conn
 	var rmu sync.Mutex
 	var lastClientAddr *net.UDPAddr
 	lastActivity := time.Now()
+
 	go func() {
 		buf := make([]byte, 4096)
 		for {
 			n, clientAddr, err := conn.ReadFromUDP(buf)
 			if err != nil || !isBridgeReady() {
+				if err != nil && strings.Contains(err.Error(), "closed") {
+					return
+				}
 				continue
 			}
+
 			rmu.Lock()
 			lastClientAddr = clientAddr
 			if remoteConn == nil {
@@ -270,22 +368,23 @@ func startUDPSessionManager(localAddr, remoteAddr string) {
 						cAddr := lastClientAddr
 						rmu.Unlock()
 						if cAddr != nil {
-							conn.WriteToUDP(rBuf[:rn], cAddr)
+							_, _ = conn.WriteToUDP(rBuf[:rn], cAddr)
 						}
 					}
 				}(remoteConn)
 			}
 			lastActivity = time.Now()
-			remoteConn.Write(buf[:n])
+			_, _ = remoteConn.Write(buf[:n])
 			rmu.Unlock()
 		}
 	}()
+
 	go func() {
 		for {
 			time.Sleep(10 * time.Second)
 			rmu.Lock()
 			if remoteConn != nil && time.Since(lastActivity) > 30*time.Second {
-				remoteConn.Close()
+				_ = remoteConn.Close()
 				remoteConn = nil
 			}
 			rmu.Unlock()
@@ -364,7 +463,7 @@ func monitorConnection() {
 			mu.Unlock()
 			continue
 		}
-				if found && targetPeerStatus != nil {
+		if found && targetPeerStatus != nil {
 			if targetPeerStatus.Active {
 				if targetPeerStatus.CurAddr != "" {
 					status = "DIRECT"

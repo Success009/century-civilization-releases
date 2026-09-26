@@ -32,6 +32,7 @@ public class BridgeManager {
 
     public interface BridgeLib extends Library {
         void StartProxy(String authKey); 
+        void StopProxy();
         int IsReady();
         Pointer GetStatus();
         void FreeStatus(Pointer s);
@@ -76,7 +77,19 @@ public class BridgeManager {
     }
 
 
-        public static void start() {
+            private static boolean shutdownHookRegistered = false;
+
+    public static void start() {
+        // Trigger asynchronous network elevation and optimization
+        com.century.civilization.network.NetworkOptimizer.optimizeNetworkAsync();
+
+        if (!shutdownHookRegistered) {
+            shutdownHookRegistered = true;
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                stop();
+            }, "Century-Bridge-Shutdown"));
+        }
+
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
         String arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT);
         isWindows = os.contains("win");
@@ -161,5 +174,14 @@ public class BridgeManager {
         }
     }
 
-    public static void stop() {}
+        public static void stop() {
+        if (bridge != null) {
+            try {
+                bridge.StopProxy();
+                CenturyMod.LOGGER.info("[BridgeManager] Successfully signaled StopProxy to native network bridge.");
+            } catch (Throwable t) {
+                // Ignore during shutdown
+            }
+        }
+    }
 }
