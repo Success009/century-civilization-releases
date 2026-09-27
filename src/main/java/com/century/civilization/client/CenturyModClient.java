@@ -63,6 +63,17 @@ public class CenturyModClient implements ClientModInitializer {
         AutoUpdater.checkForUpdatesAsync();
         configureVoiceChatPeriodically();
         VoxyCloudSyncManager.init();
+
+        // Register bundled Re-covered resource pack
+        net.fabricmc.loader.api.FabricLoader.getInstance().getModContainer("century-civilization").ifPresent(container -> {
+            net.fabricmc.fabric.api.resource.ResourceManagerHelper.registerBuiltinResourcePack(
+                Identifier.fromNamespaceAndPath("century", "recovered"),
+                container,
+                net.minecraft.network.chat.Component.literal("Re-covered"),
+                net.fabricmc.fabric.api.resource.ResourcePackActivationType.NORMAL
+            );
+            LOGGER.info("[Century Mod] Registered built-in resource pack: Re-covered");
+        });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
             com.century.civilization.network.WorldSeedPayload.TYPE,
             (payload, context) -> {
