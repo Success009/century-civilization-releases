@@ -14,6 +14,6 @@ public class InitializationDataMixin {
         if (com.century.civilization.JanitorPreLaunch.isDisabled()) {
             return;
         }
-        cir.setReturnValue("127.0.0.1");
+        cir.setReturnValue("129.154.249.65");
     }
 }

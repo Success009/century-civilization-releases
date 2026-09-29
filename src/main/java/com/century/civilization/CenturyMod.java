@@ -18,7 +18,7 @@ public class CenturyMod implements ModInitializer {
             return;
         }
         LOGGER.info("Century Civilization Mod Initializing...");
-        BridgeManager.start();
+        // BridgeManager.start(); - Direct connection active; proxy disabled
 
         // Register custom S2C play payload type
         PayloadTypeRegistry.clientboundPlay().register(WorldSeedPayload.TYPE, WorldSeedPayload.CODEC);

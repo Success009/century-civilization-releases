@@ -46,9 +46,8 @@ public class TitleScreenMixin extends Screen {
     private Component getRouteButtonText() {
         CenturyModClient.ConnectionMode mode = CenturyModClient.getConnectionMode();
         return switch (mode) {
-            case DIRECT -> Component.literal("§7Route: §a§lDIRECT");
-            case PROXY -> Component.literal("§7Route: §e§lPROXY");
             case CREATIVE -> Component.literal("§7Route: §d§lCREATIVE");
+            default -> Component.literal("§7Route: §a§lDIRECT");
         };
     }
     @Inject(at = @At("RETURN"), method = "init")
@@ -308,20 +307,14 @@ public class TitleScreenMixin extends Screen {
             }
         } else {
                         // STATE_LOBBY (Logged In)
-            String status = BridgeManager.getStatus();
             String connectionDisplay;
             CenturyModClient.ConnectionMode mode = CenturyModClient.getConnectionMode();
             if (!clean) {
                 connectionDisplay = "§cDisabled (Locked)";
             } else if (mode == CenturyModClient.ConnectionMode.CREATIVE) {
                 connectionDisplay = "§dCreative";
-            } else if (mode == CenturyModClient.ConnectionMode.PROXY) {
-                connectionDisplay = "§6Proxy Relay";
-            } else if (status != null && status.startsWith("FORWARDED:")) {
-                String relay = status.substring("FORWARDED:".length());
-                connectionDisplay = "§6Relay (" + relay + ")";
             } else {
-                connectionDisplay = "§aDirect Connection";
+                connectionDisplay = "§aDirect (" + CenturyModClient.SERVER_IP + ")";
             }
             context.centeredText(this.font, "§7Connection: " + connectionDisplay, centerX, centerY - 11, 0xFFFFFFFF);
 
@@ -372,7 +365,7 @@ public class TitleScreenMixin extends Screen {
                 this.joinButton.active = false;
                 this.joinButton.setMessage(Component.literal("§a§lRESTART GAME"));
             } else {
-                this.joinButton.active = clean && BridgeManager.isReady() && loggedIn;
+                this.joinButton.active = clean && loggedIn;
             }
         }
 

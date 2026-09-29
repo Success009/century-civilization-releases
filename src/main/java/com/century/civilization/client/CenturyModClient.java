@@ -29,9 +29,9 @@ import java.util.UUID;
 
 public class CenturyModClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("century-mod-client");
-    public static final String SERVER_IP = "127.0.0.1";
+    public static final String SERVER_IP = "129.154.249.65";
     public static final int SERVER_PORT = 25565;
-    public static final String PROXY_IP = "mauritania-allied.tun.ply.gg";
+    public static final String PROXY_IP = "129.154.249.65";
     public static final int PROXY_PORT = 25565;
     public static final String CREATIVE_IP = "mc2164843.fmcs.cloud";
     public static final int CREATIVE_PORT = 26092;
@@ -444,8 +444,7 @@ public class CenturyModClient implements ClientModInitializer {
 
     public static void cycleConnectionMode() {
         connectionMode = switch (connectionMode) {
-            case DIRECT -> ConnectionMode.PROXY;
-            case PROXY -> ConnectionMode.CREATIVE;
+            case DIRECT, PROXY -> ConnectionMode.CREATIVE;
             case CREATIVE -> ConnectionMode.DIRECT;
         };
         saveNetworkConfig();
@@ -513,27 +512,19 @@ public class CenturyModClient implements ClientModInitializer {
         int port = SERVER_PORT;
         String serverName = "Century Server";
 
-        switch (connectionMode) {
-            case PROXY -> {
-                host = PROXY_IP;
-                port = PROXY_PORT;
-                LOGGER.info("Proxy Link selected. Routing connection directly to " + host + ":" + port);
-            }
-            case CREATIVE -> {
-                host = CREATIVE_IP;
-                port = CREATIVE_PORT;
-                serverName = "Century Creative";
-                LOGGER.info("Creative Server selected. Routing connection directly to " + host + ":" + port);
-            }
-            case DIRECT -> {
-                LOGGER.info("Secure Tunnel selected. Routing connection via local bridge at " + host + ":" + port);
-            }
+        if (connectionMode == ConnectionMode.CREATIVE) {
+            host = CREATIVE_IP;
+            port = CREATIVE_PORT;
+            serverName = "Century Creative";
+            LOGGER.info("Creative Server selected. Routing connection directly to " + host + ":" + port);
+        } else {
+            LOGGER.info("Direct Server connection selected. Routing connection directly to " + host + ":" + port);
         }
 
         Minecraft client = Minecraft.getInstance();
         ServerAddress serverAddress = new ServerAddress(host, port);
-        ServerData serverData = new ServerData(serverName, "century.internal.gateway", ServerData.Type.REALM);
-        LOGGER.info("Created ServerData with dummy address for secure routing.");
+        ServerData serverData = new ServerData(serverName, host, ServerData.Type.OTHER);
+        LOGGER.info("Connecting to " + host + ":" + port);
         ConnectScreen.startConnecting(parent, client, serverAddress, serverData, true, null);
     }
 }
