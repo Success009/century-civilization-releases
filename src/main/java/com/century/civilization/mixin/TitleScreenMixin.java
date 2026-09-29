@@ -314,7 +314,7 @@ public class TitleScreenMixin extends Screen {
             } else if (mode == CenturyModClient.ConnectionMode.CREATIVE) {
                 connectionDisplay = "§dCreative";
             } else {
-                connectionDisplay = "§aDirect (" + CenturyModClient.SERVER_IP + ")";
+                connectionDisplay = "§aDirect Connection";
             }
             context.centeredText(this.font, "§7Connection: " + connectionDisplay, centerX, centerY - 11, 0xFFFFFFFF);
 

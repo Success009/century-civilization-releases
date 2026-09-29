@@ -516,15 +516,15 @@ public class CenturyModClient implements ClientModInitializer {
             host = CREATIVE_IP;
             port = CREATIVE_PORT;
             serverName = "Century Creative";
-            LOGGER.info("Creative Server selected. Routing connection directly to " + host + ":" + port);
+            LOGGER.info("Creative Server selected. Routing connection to gateway.");
         } else {
-            LOGGER.info("Direct Server connection selected. Routing connection directly to " + host + ":" + port);
+            LOGGER.info("Direct Server connection selected. Routing connection to gateway.");
         }
 
         Minecraft client = Minecraft.getInstance();
         ServerAddress serverAddress = new ServerAddress(host, port);
-        ServerData serverData = new ServerData(serverName, host, ServerData.Type.OTHER);
-        LOGGER.info("Connecting to " + host + ":" + port);
+        ServerData serverData = new ServerData(serverName, "century.internal.gateway", ServerData.Type.REALM);
+        LOGGER.info("Initiating secure connection...");
         ConnectScreen.startConnecting(parent, client, serverAddress, serverData, true, null);
     }
 }
