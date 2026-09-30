@@ -73,6 +73,14 @@ public class CenturyModClient implements ClientModInitializer {
                 net.fabricmc.fabric.api.resource.ResourcePackActivationType.NORMAL
             );
             LOGGER.info("[Century Mod] Registered built-in resource pack: Re-covered");
+
+            net.fabricmc.fabric.api.resource.ResourceManagerHelper.registerBuiltinResourcePack(
+                Identifier.fromNamespaceAndPath("century", "colourful_tropical_fish"),
+                container,
+                net.minecraft.network.chat.Component.literal("Colourful Tropical Fish"),
+                net.fabricmc.fabric.api.resource.ResourcePackActivationType.NORMAL
+            );
+            LOGGER.info("[Century Mod] Registered built-in resource pack: Colourful Tropical Fish");
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
             com.century.civilization.network.WorldSeedPayload.TYPE,

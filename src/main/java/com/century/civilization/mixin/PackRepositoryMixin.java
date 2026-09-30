@@ -36,19 +36,22 @@ public class PackRepositoryMixin {
         }
 
         // Built-in Century mod resource pack identifiers
-        if (id.equals("century:recovered") || id.equals("century:re-covered")) {
+        if (id.equals("century:recovered") || id.equals("century:re-covered")
+                || id.equals("century:colourful_tropical_fish") || id.equals("century:colourful-tropical-fish")) {
             return true;
         }
 
-        // Allowed external custom resource pack: Re-covered
+        // Allowed external custom resource packs: Re-covered, Colourful Tropical Fish
         String lowerId = id.toLowerCase(Locale.ROOT);
-        if (lowerId.contains("re-covered") || lowerId.contains("recovered")) {
+        if (lowerId.contains("re-covered") || lowerId.contains("recovered")
+                || lowerId.contains("tropical fish") || lowerId.contains("tropical_fish") || lowerId.contains("tropical-fish")) {
             return true;
         }
 
         if (pack != null && pack.getTitle() != null) {
             String lowerTitle = pack.getTitle().getString().toLowerCase(Locale.ROOT);
-            if (lowerTitle.contains("re-covered") || lowerTitle.contains("recovered")) {
+            if (lowerTitle.contains("re-covered") || lowerTitle.contains("recovered")
+                    || lowerTitle.contains("tropical fish") || lowerTitle.contains("tropical_fish") || lowerTitle.contains("tropical-fish")) {
                 return true;
             }
         }
