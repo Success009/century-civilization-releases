@@ -95,11 +95,10 @@ public class VoxyCloudSyncManager {
 
                         if (remoteVersion > localVersion) {
                             LOGGER.info("[VOXY-SYNC] Found updated world LOD package (v{} > v{}). Downloading...", remoteVersion, localVersion);
-                            downloadAndExtractZip(client, downloadUrl, savesDir);
+                            downloadAndExtractZip(HTTP_CLIENT, downloadUrl, savesDir);
                             Files.writeString(localVersionFile, String.valueOf(remoteVersion));
                             lastSyncTimestamp = System.currentTimeMillis();
                             LOGGER.info("[VOXY-SYNC] World LOD data synchronized successfully.");
-                        } else {
                             LOGGER.info("[VOXY-SYNC] Local Voxy LOD data is already up to date with cloud (v{}).", localVersion);
                         }
                     }
