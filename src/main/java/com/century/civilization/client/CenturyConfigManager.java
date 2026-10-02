@@ -76,11 +76,12 @@ public class CenturyConfigManager {
     private static volatile boolean isDownloading = false;
 
     static {
-        // --- Recommended / Native (Enabled by default) ---
+                // --- Recommended / Native (Enabled by default) ---
         MOD_ENTRIES.add(new ModEntry("sodium", "Sodium", "Recommended / Native", "sodium-fabric-0.9.1+mc26.2.jar", true, "Rendering engine", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("bobby", "Extended Render (Bobby)", "Recommended / Native", "bobby-5.2.15+mc26.2.jar", true, "Render distance extension", List.of("cloth-config")));
         MOD_ENTRIES.add(new ModEntry("pingdisplay", "Ping Display", "Recommended / Native", "ping-display-26.2.jar", true, "Render ping as milliseconds", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("shulkerboxtooltip", "Shulker Box Tooltip", "Recommended / Native", "shulkerboxtooltip-fabric-5.4.0+26.2.jar", true, "Shulker box contents preview", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("continuity", "Continuity", "Recommended / Native", "continuity-3.0.1+26.2.jar", true, "Connected textures support", Collections.emptyList()));
 
         // --- Additional (Disabled by default) ---
         MOD_ENTRIES.add(new ModEntry("voicechat", "Voice Chat", "Additional", "voicechat-fabric-2.6.21+26.2.jar", false, "Proximity voice chat", Collections.emptyList()));
@@ -92,8 +93,7 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Additional", "litematica-fabric-26.2-0.28.4.jar", false, "Schematic viewer", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("voxy", "Voxy", "Additional", "voxy-0.2.18-beta.jar", false, "Voxel LOD rendering engine", List.of("sodium")));
         MOD_ENTRIES.add(new ModEntry("iris", "Iris Shaders", "Additional", "iris-fabric-1.11.2+mc26.2.jar", false, "Shaders support", Collections.emptyList()));
-                MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("continuity", "Continuity", "Additional", "continuity-3.0.1+26.2.jar", false, "Connected textures support", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("voxyserver", "Voxy Server", "Additional", "VoxyServer-1.2.4-26.2.jar", false, "Voxy server-side LOD support", List.of("voxy")));
         DEPENDENCIES.put("cloth-config", new DependencyMod("cloth-config", "cloth-config-26.2.155.jar"));
         DEPENDENCIES.put("yacl", new DependencyMod("yacl", "yet_another_config_lib_v3-3.9.5+26.2-fabric.jar"));

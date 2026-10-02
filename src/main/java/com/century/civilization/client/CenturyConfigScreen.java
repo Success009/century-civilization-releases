@@ -17,20 +17,20 @@ public class CenturyConfigScreen extends Screen {
         this.parent = parent;
     }
 
-    private int getEntryX(int i) {
+        private int getEntryX(int i) {
         int centerX = this.width / 2;
         int cardX = centerX - 195; // cardWidth = 390
-        return i < 7 ? (cardX + 145) : (cardX + 340);
+        return i < 8 ? (cardX + 145) : (cardX + 340);
     }
 
     private int getEntryY(int i) {
         int cardY = 24;
-        if (i < 4) {
-            return cardY + 24 + (i * 18);
-        } else if (i < 7) {
-            return cardY + 114 + ((i - 4) * 18);
+        if (i < 5) {
+            return cardY + 22 + (i * 17);
+        } else if (i < 8) {
+            return cardY + 124 + ((i - 5) * 17);
         } else {
-            return cardY + 24 + ((i - 7) * 18);
+            return cardY + 22 + ((i - 8) * 17);
         }
     }
 
@@ -138,10 +138,10 @@ public class CenturyConfigScreen extends Screen {
         context.fill(cardX - 1, cardY, cardX, cardY + cardHeight, borderColor);
         context.fill(cardX + cardWidth, cardY, cardX + cardWidth + 1, cardY + cardHeight, borderColor);
 
-        // Category headers
-        context.text(this.font, "§e§l[ Recommended / Native ]", cardX + 10, cardY + 8, 0xFFFFFFFF);
-        context.text(this.font, "§e§l[ Additional ]", cardX + 10, cardY + 98, 0xFFFFFFFF);
-        context.text(this.font, "§e§l[ Additional (Cont.) ]", cardX + 205, cardY + 8, 0xFFFFFFFF);
+                // Category headers
+        context.text(this.font, "§e§l[ Recommended / Native ]", cardX + 10, cardY + 7, 0xFFFFFFFF);
+        context.text(this.font, "§e§l[ Additional ]", cardX + 10, cardY + 110, 0xFFFFFFFF);
+        context.text(this.font, "§e§l[ Additional (Cont.) ]", cardX + 205, cardY + 7, 0xFFFFFFFF);
 
         // Render mod labels
         List<CenturyConfigManager.ModEntry> entries = CenturyConfigManager.getModEntries();
@@ -149,7 +149,7 @@ public class CenturyConfigScreen extends Screen {
         for (int i = 0; i < entries.size(); i++) {
             CenturyConfigManager.ModEntry entry = entries.get(i);
             int y = getEntryY(i);
-            int textX = i < 7 ? (cardX + 12) : (cardX + 205);
+            int textX = i < 8 ? (cardX + 12) : (cardX + 205);
 
             String titleText = "§f" + (i + 1) + ". " + entry.name;
             context.text(this.font, titleText, textX, y + 3, 0xFFFFFFFF);
