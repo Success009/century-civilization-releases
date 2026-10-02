@@ -18,12 +18,20 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 public class AutoUpdater {
-    private static final String REPO = "Success009/century-civilization-releases";
+        private static final String REPO = "Success009/century-civilization-releases";
     private static final String API_URL = "https://api.github.com/repos/" + REPO + "/releases/latest";
     private static boolean updateCompleted = false;
 
+    // Singleton HttpClient to prevent recurring thread pool and socket leakage
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(12))
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .build();
+
+    private static final java.util.regex.Pattern VERSION_PATTERN = java.util.regex.Pattern.compile("1\\.0\\.(\\d+)");
+    private static final java.util.regex.Pattern NUMERIC_PATTERN = java.util.regex.Pattern.compile("\\d+");
     
-        private static final String[] REQUIRED_MODS = {
+    private static final String[] REQUIRED_MODS = {
         "sodium-fabric-0.9.1+mc26.2.jar"
     };
 
@@ -31,7 +39,7 @@ public class AutoUpdater {
         return updateCompleted;
     }
 
-        public static void checkForUpdatesAsync() {
+    public static void checkForUpdatesAsync() {
         Thread thread = new Thread(() -> {
             while (true) {
                 try {
@@ -49,11 +57,6 @@ public class AutoUpdater {
                     String currentJarName = currentJarFile.getName();
                     CenturyMod.LOGGER.info("[AUTO-UPDATER] Checking for updates. Current active JAR: " + currentJarName);
 
-                    HttpClient client = HttpClient.newBuilder()
-                            .connectTimeout(Duration.ofSeconds(10))
-                            .followRedirects(HttpClient.Redirect.ALWAYS)
-                            .build();
-
                     HttpRequest request = HttpRequest.newBuilder()
                             .uri(URI.create(API_URL))
                             .header("Accept", "application/vnd.github.v3+json")
@@ -61,7 +64,7 @@ public class AutoUpdater {
                             .GET()
                             .build();
 
-                    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
                     if (response.statusCode() == 200) {
                         JsonObject release = JsonParser.parseString(response.body()).getAsJsonObject();
 
@@ -80,16 +83,36 @@ public class AutoUpdater {
                             String downloadUrl = null;
                             String assetName = null;
 
+                            String universalUrl = null;
+                            String universalName = null;
+                            String platformUrl = null;
+                            String platformName = null;
+
                             for (JsonElement assetEl : assets) {
                                 JsonObject asset = assetEl.getAsJsonObject();
                                 if (asset.has("name") && asset.has("browser_download_url")) {
                                     String name = asset.get("name").getAsString();
-                                    if (name.endsWith(platformSuffix)) {
-                                        assetName = name;
-                                        downloadUrl = asset.get("browser_download_url").getAsString();
-                                        break;
+                                    if (!name.endsWith(".jar")) continue;
+
+                                    // Clean universal JAR (CenturyCivilization-1.0.X.jar without platform tags)
+                                    if (name.startsWith("CenturyCivilization-") &&
+                                            !name.contains("-windows") && !name.contains("-mac") && !name.contains("-linux") && !name.contains("-universal")) {
+                                        universalName = name;
+                                        universalUrl = asset.get("browser_download_url").getAsString();
+                                    } else if (name.endsWith(platformSuffix)) {
+                                        platformName = name;
+                                        platformUrl = asset.get("browser_download_url").getAsString();
                                     }
                                 }
+                            }
+
+                            // Prioritize clean universal JAR, fallback to platform-specific slice
+                            if (universalUrl != null && universalName != null) {
+                                assetName = universalName;
+                                downloadUrl = universalUrl;
+                            } else if (platformUrl != null && platformName != null) {
+                                assetName = platformName;
+                                downloadUrl = platformUrl;
                             }
 
                             if (downloadUrl != null && assetName != null) {
@@ -107,7 +130,7 @@ public class AutoUpdater {
                                     CenturyMod.LOGGER.info("[AUTO-UPDATER] Mod is up to date (current build: " + currentVer + ", remote build: " + remoteVer + ").");
                                 }
                             } else {
-                                CenturyMod.LOGGER.warn("[AUTO-UPDATER] No platform-specific asset found matching suffix: " + platformSuffix);
+                                CenturyMod.LOGGER.warn("[AUTO-UPDATER] No compatible update asset found (neither universal nor " + platformSuffix + ")");
                             }
                         }
                     } else {
@@ -131,13 +154,13 @@ public class AutoUpdater {
     private static int parseVersionFromFilename(String verStr) {
         if (verStr == null) return 0;
         try {
-            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("1\\.0\\.(\\d+)").matcher(verStr);
+            java.util.regex.Matcher matcher = VERSION_PATTERN.matcher(verStr);
             if (matcher.find()) {
                 return Integer.parseInt(matcher.group(1));
             }
         } catch (Throwable e) {}
         try {
-            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(verStr);
+            java.util.regex.Matcher matcher = NUMERIC_PATTERN.matcher(verStr);
             int lastNum = 0;
             while (matcher.find()) {
                 lastNum = Integer.parseInt(matcher.group());

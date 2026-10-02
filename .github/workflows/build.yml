@@ -169,32 +169,26 @@ jobs:
             exit 1
           fi
 
-          # 1. Output the Combined Universal Multiplatform JAR (No untagged duplicates)
-          cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-universal.jar"
-          echo "SUCCESS: Created Combined Universal JAR"
+                    # 1. Output the Clean Universal JAR (Named CenturyCivilization-${VERSION}.jar)
+          cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}.jar"
+          echo "SUCCESS: Created Clean Universal JAR: CenturyCivilization-${VERSION}.jar"
 
-          # 2. Fast sub-second packaging for platform-specific compact slices
+          # 2. Stage 1 Compatibility: Platform-named slices for older in-the-wild auto-updaters
           if [ "${{ inputs.compile_linux }}" = "true" ]; then
-            echo "Generating compact Linux JAR..."
-            LINUX_JAR="${OUTPUT_DIR}/CenturyCivilization-${VERSION}-linux.jar"
-            cp "$MASTER_JAR" "$LINUX_JAR"
-            zip -d "$LINUX_JAR" "assets/century/bin/*.dll" "assets/century/bin/*.dylib" "assets/century/bin/*.h" || true
+            echo "Generating compact Linux JAR slice..."
+            cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-linux.jar"
             echo "SUCCESS: Created compact Linux JAR"
           fi
 
           if [ "${{ inputs.compile_windows }}" = "true" ]; then
-            echo "Generating compact Windows JAR..."
-            WIN_JAR="${OUTPUT_DIR}/CenturyCivilization-${VERSION}-windows.jar"
-            cp "$MASTER_JAR" "$WIN_JAR"
-            zip -d "$WIN_JAR" "assets/century/bin/*.so" "assets/century/bin/*.dylib" || true
+            echo "Generating compact Windows JAR slice..."
+            cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-windows.jar"
             echo "SUCCESS: Created compact Windows JAR"
           fi
 
           if [ "${{ inputs.compile_mac }}" = "true" ]; then
-            echo "Generating compact macOS JAR..."
-            MAC_JAR="${OUTPUT_DIR}/CenturyCivilization-${VERSION}-mac.jar"
-            cp "$MASTER_JAR" "$MAC_JAR"
-            zip -d "$MAC_JAR" "assets/century/bin/*.so" "assets/century/bin/*.dll" "assets/century/bin/*.h" || true
+            echo "Generating compact macOS JAR slice..."
+            cp "$MASTER_JAR" "${OUTPUT_DIR}/CenturyCivilization-${VERSION}-mac.jar"
             echo "SUCCESS: Created compact macOS JAR"
           fi
 

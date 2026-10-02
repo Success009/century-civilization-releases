@@ -50,9 +50,16 @@ public class CenturyModClient implements ClientModInitializer {
     private static String userRole = "";
     private static net.minecraft.client.User cachedUser = null;
     private static boolean sessionLoaded = false;
-    private static net.minecraft.resources.Identifier loadedSkinIdentifier = null;
+        private static net.minecraft.resources.Identifier loadedSkinIdentifier = null;
     private static boolean skinDownloadStarted = false;
-        @Override
+
+    // Singleton HttpClient to prevent OS thread/socket leakages
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(12))
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .build();
+
+    @Override
     public void onInitializeClient() {
         if (JanitorPreLaunch.isDisabled()) {
             LOGGER.info("Century Civilization Client (Older Version) is disabled and inactive.");
@@ -300,10 +307,6 @@ public class CenturyModClient implements ClientModInitializer {
 
     public static String login(String username, String password) {
         try {
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(12))
-                    .build();
-
             String jsonPayload = String.format("{\"username\":\"%s\",\"password\":\"%s\"}",
                     username.replace("\"", "\\\""),
                     password.replace("\"", "\\\""));
@@ -315,8 +318,7 @@ public class CenturyModClient implements ClientModInitializer {
                     .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
                     .build();
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
                 JsonObject obj = JsonParser.parseString(response.body()).getAsJsonObject();
                 String token = obj.get("token").getAsString();
                 String apiUsername = obj.get("username").getAsString();
@@ -337,11 +339,7 @@ public class CenturyModClient implements ClientModInitializer {
     public static boolean verifySession() {
         loadSessionIfNeeded();
         if (!loggedIn || authToken.isEmpty()) return false;
-        try {
-            HttpClient client = HttpClient.newBuilder()
-                    .connectTimeout(Duration.ofSeconds(8))
-                    .build();
-
+                try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(API_BASE_URL + "/api/user/profile"))
                     .header("Authorization", "Bearer " + authToken)
@@ -349,7 +347,7 @@ public class CenturyModClient implements ClientModInitializer {
                     .GET()
                     .build();
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 JsonObject obj = JsonParser.parseString(response.body()).getAsJsonObject();
                 if (obj.has("username")) {
@@ -396,18 +394,14 @@ public class CenturyModClient implements ClientModInitializer {
         Identifier id = Identifier.fromNamespaceAndPath("century", "skins/" + username);
 
         // Fetch skin from web server asynchronously
-        Thread downloadThread = new Thread(() -> {
+                Thread downloadThread = new Thread(() -> {
             try {
-                HttpClient client = HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofSeconds(10))
-                        .build();
-
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(API_BASE_URL + "/skins/" + username + ".png"))
                         .GET()
                         .build();
 
-                HttpResponse<java.io.InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                HttpResponse<java.io.InputStream> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
                 
                 // Verify content type to prevent reading fallback HTML React pages (index.html) as PNG
                 Optional<String> contentTypeOpt = response.headers().firstValue("Content-Type");

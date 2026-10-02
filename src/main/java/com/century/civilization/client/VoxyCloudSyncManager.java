@@ -21,9 +21,15 @@ import java.util.zip.ZipOutputStream;
 
 public class VoxyCloudSyncManager {
     private static final Logger LOGGER = LoggerFactory.getLogger("century-voxy-sync");
-    private static final String API_BASE_URL = "https://century.success0.com.np/api/voxy";
+        private static final String API_BASE_URL = "https://century.success0.com.np/api/voxy";
     private static volatile boolean syncInProgress = false;
     private static volatile long lastSyncTimestamp = 0L;
+
+    // Singleton HttpClient to prevent memory/thread descriptor leaks
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .build();
 
     public static boolean isVoxyActive() {
         return FabricLoader.getInstance().isModLoaded("voxy");
@@ -64,18 +70,13 @@ public class VoxyCloudSyncManager {
                     Files.createDirectories(savesDir);
                 }
 
-                HttpClient client = HttpClient.newBuilder()
-                        .connectTimeout(Duration.ofSeconds(12))
-                        .followRedirects(HttpClient.Redirect.ALWAYS)
-                        .build();
-
-                HttpRequest request = HttpRequest.newBuilder()
+                                HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(API_BASE_URL + "/manifest"))
                         .header("User-Agent", "Century-VoxySync")
                         .GET()
                         .build();
 
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() == 200) {
                     JsonObject manifest = JsonParser.parseString(response.body()).getAsJsonObject();
                     if (manifest.has("download_url") && manifest.has("version")) {
@@ -203,11 +204,7 @@ public class VoxyCloudSyncManager {
 
                 byte[] zipBytes = baos.toByteArray();
                 if (zipBytes.length > 0) {
-                    HttpClient client = HttpClient.newBuilder()
-                            .connectTimeout(Duration.ofSeconds(15))
-                            .build();
-
-                    HttpRequest uploadReq = HttpRequest.newBuilder()
+                                        HttpRequest uploadReq = HttpRequest.newBuilder()
                             .uri(URI.create(API_BASE_URL + "/upload"))
                             .header("Content-Type", "application/zip")
                             .header("User-Agent", "Century-VoxySync")
@@ -215,7 +212,7 @@ public class VoxyCloudSyncManager {
                             .POST(HttpRequest.BodyPublishers.ofByteArray(zipBytes))
                             .build();
 
-                    HttpResponse<String> resp = client.send(uploadReq, HttpResponse.BodyHandlers.ofString());
+                    HttpResponse<String> resp = HTTP_CLIENT.send(uploadReq, HttpResponse.BodyHandlers.ofString());
                     if (resp.statusCode() == 200) {
                         LOGGER.info("[VOXY-SYNC] Successfully pushed new Voxy LOD delta package to cloud.");
                         lastSyncTimestamp = System.currentTimeMillis();

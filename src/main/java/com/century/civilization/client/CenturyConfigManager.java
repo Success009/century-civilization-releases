@@ -23,8 +23,14 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 public class CenturyConfigManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger("century-config");
+        private static final Logger LOGGER = LoggerFactory.getLogger("century-config");
     private static final String GITHUB_MODS_BASE_URL = "https://github.com/Success009/century-civilization-releases/raw/main/mods/";
+
+    // Shared singleton HttpClient to prevent resource and descriptor leakage
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .build();
 
     public static class ModEntry {
         public final String id;
@@ -86,7 +92,9 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Additional", "litematica-fabric-26.2-0.28.4.jar", false, "Schematic viewer", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("voxy", "Voxy", "Additional", "voxy-0.2.18-beta.jar", false, "Voxel LOD rendering engine", List.of("sodium")));
         MOD_ENTRIES.add(new ModEntry("iris", "Iris Shaders", "Additional", "iris-fabric-1.11.2+mc26.2.jar", false, "Shaders support", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
+                MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("continuity", "Continuity", "Additional", "continuity-3.0.1+26.2.jar", false, "Connected textures support", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("voxyserver", "Voxy Server", "Additional", "VoxyServer-1.2.4-26.2.jar", false, "Voxy server-side LOD support", List.of("voxy")));
         DEPENDENCIES.put("cloth-config", new DependencyMod("cloth-config", "cloth-config-26.2.155.jar"));
         DEPENDENCIES.put("yacl", new DependencyMod("yacl", "yet_another_config_lib_v3-3.9.5+26.2-fabric.jar"));
         DEPENDENCIES.put("kotlin", new DependencyMod("kotlin", "fabric-language-kotlin-1.13.13+kotlin.2.4.10.jar"));
@@ -370,11 +378,7 @@ public class CenturyConfigManager {
     }
 
     private static void downloadModFile(String jarName, Path targetFile) throws Exception {
-        String urlStr = GITHUB_MODS_BASE_URL + jarName;
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15))
-                .followRedirects(HttpClient.Redirect.ALWAYS)
-                .build();
+                String urlStr = GITHUB_MODS_BASE_URL + jarName;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlStr))
@@ -382,7 +386,7 @@ public class CenturyConfigManager {
                 .GET()
                 .build();
 
-        HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<InputStream> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
         if (response.statusCode() != 200) {
             throw new java.io.IOException("HTTP error " + response.statusCode() + " downloading " + jarName + " from " + urlStr);
         }

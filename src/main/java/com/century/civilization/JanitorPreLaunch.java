@@ -177,12 +177,14 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
 
     // Strict list of allowed top/second-level package structures inside mod jars
     // Strict list of allowed top/second-level package structures inside mod jars
-        private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
+                private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
         "by/gdev",
         "ca/fxco",
         "carpet",
+        "com/dripps",
         "com/logisticscraft",
         "com/misterpemodder",
+        "com/pepperbell",
         "com/spunkyinsaan",
         "com/success0",
         "de/johni0702",
@@ -195,6 +197,7 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "kroppeb/stareval",
         "malte0811/ferritecore",
         "me/cortex",
+        "me/pepperbell",
         "me/shedaniel",
         "net/caffeinemc",
         "net/fabricmc",
