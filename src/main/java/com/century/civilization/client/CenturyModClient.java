@@ -319,6 +319,7 @@ public class CenturyModClient implements ClientModInitializer {
                     .build();
 
             HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
                 JsonObject obj = JsonParser.parseString(response.body()).getAsJsonObject();
                 String token = obj.get("token").getAsString();
                 String apiUsername = obj.get("username").getAsString();
