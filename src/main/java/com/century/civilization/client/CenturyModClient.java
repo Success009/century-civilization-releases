@@ -26,6 +26,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.client.networking.v1.ClientLoginNetworking;
+import net.minecraft.network.FriendlyByteBuf;
 
 public class CenturyModClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("century-mod-client");
@@ -65,9 +69,20 @@ public class CenturyModClient implements ClientModInitializer {
             LOGGER.info("Century Civilization Client (Older Version) is disabled and inactive.");
             return;
         }
-        LOGGER.info("Century UI Client Initialized.");
+                LOGGER.info("Century UI Client Initialized.");
         loadNetworkConfig();
         AutoUpdater.checkForUpdatesAsync();
+
+        // CenturyGuard Login Handshake Receiver
+        Identifier authChannel = Identifier.fromNamespaceAndPath("century", "auth");
+        ClientLoginNetworking.registerGlobalReceiver(authChannel, (client, handler, buf, listenerAdder) -> {
+            LOGGER.info("[CenturyGuard] Received security authentication challenge from server.");
+            FriendlyByteBuf responseBuf = new FriendlyByteBuf(Unpooled.buffer());
+            loadSessionIfNeeded();
+            String token = (authToken != null && !authToken.isEmpty()) ? authToken : "CENTURY_OFFICIAL_MOD_V1";
+            responseBuf.writeUtf(token);
+            return CompletableFuture.completedFuture(responseBuf);
+        });
         configureVoiceChatPeriodically();
         VoxyCloudSyncManager.init();
 
