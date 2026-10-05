@@ -73,13 +73,15 @@ public class CenturyModClient implements ClientModInitializer {
         loadNetworkConfig();
         AutoUpdater.checkForUpdatesAsync();
 
-        // CenturyGuard Login Handshake Receiver
+                // CenturyGuard Login Handshake Receiver
         Identifier authChannel = Identifier.fromNamespaceAndPath("century", "auth");
         ClientLoginNetworking.registerGlobalReceiver(authChannel, (client, handler, buf, listenerAdder) -> {
             LOGGER.info("[CenturyGuard] Received security authentication challenge from server.");
-            FriendlyByteBuf responseBuf = new FriendlyByteBuf(Unpooled.buffer());
             loadSessionIfNeeded();
-            String token = (authToken != null && !authToken.isEmpty()) ? authToken : "CENTURY_OFFICIAL_MOD_V1";
+            FriendlyByteBuf responseBuf = new FriendlyByteBuf(Unpooled.buffer());
+            String token = (authToken != null && !authToken.trim().isEmpty())
+                    ? authToken.trim()
+                    : "CENTURY_OFFICIAL_MOD_V1";
             responseBuf.writeUtf(token);
             return CompletableFuture.completedFuture(responseBuf);
         });
