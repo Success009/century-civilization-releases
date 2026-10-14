@@ -96,7 +96,7 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("voxyserver", "Voxy Server", "Additional", "VoxyServer-1.2.4-26.2.jar", false, "Voxy server-side LOD support", List.of("voxy")));
 
         // --- Technical (Disabled by default) ---
-        MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Technical", "litematica-fabric-26.2-0.28.4.jar", false, "Schematic viewer", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Technical", "litematica-fabric-26.2-0.28.8.jar", false, "Schematic viewer", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("syncmatica", "Syncmatica", "Technical", "syncmatica-fabric-26.2-0.3.20.jar", false, "Shared schematics", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("minihud", "MiniHUD", "Technical", "minihud-fabric-26.2-0.40.7.jar", false, "F3 info overlays", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("itemscroller", "Item Scroller", "Technical", "itemscroller-fabric-26.2-0.32.2.jar", false, "Inventory scrolling", List.of("malilib")));
