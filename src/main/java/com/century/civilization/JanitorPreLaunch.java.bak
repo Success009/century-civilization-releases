@@ -1,0 +1,96 @@
+package com.century.civilization;
+
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+public class JanitorPreLaunch implements PreLaunchEntrypoint {
+    private static final Logger LOGGER = LoggerFactory.getLogger("century-janitor");
+    private static final List<String> ILLEGAL_MODS_FOUND = new ArrayList<>();
+    
+    private static final Set<String> ALLOWED_MODS = new HashSet<>(Arrays.asList(
+        "minecraft",
+        "java",
+        "fabricloader",
+        "nml-mod",
+        "ability-mod",
+        "ability_mod",
+        "century-civilization",
+        "century_civilization",
+        "century-mod",
+        "sodium",
+        "lithium",
+        "ferritecore",
+        "iris",
+        "entityculling",
+        "immediatelyfast",
+        "sodium-extra",
+        "dynamic_fps",
+        "moreculling",
+        "optifabric",
+        "optifine",
+        "tlskincape",
+        "modmenu",
+        "cloth-config2",
+        "cloth-config",
+        "indium",
+        "reeses-sodium-options",
+        "mixinextras",
+        "fabric",
+        "caffeineconfig",
+                "zoomify",
+        "yet_another_config_lib_v3",
+        "devtools",
+        "malilib",
+                "conditional-mixin",
+        "litematica",
+        "voicechat"
+    ));
+
+    public static List<String> getIllegalMods() {
+        return ILLEGAL_MODS_FOUND;
+    }
+
+    public static boolean isClean() {
+        return ILLEGAL_MODS_FOUND.isEmpty();
+    }
+
+    @Override
+    public void onPreLaunch() {
+        LOGGER.info("Century Janitor: Initializing security sweeps...");
+        
+        ILLEGAL_MODS_FOUND.clear();
+
+        Set<String> illegalMods = FabricLoader.getInstance().getAllMods().stream()
+            .map(mod -> mod.getMetadata().getId())
+            .filter(id -> !isAllowed(id))
+            .collect(Collectors.toSet());
+
+        if (!illegalMods.isEmpty()) {
+            ILLEGAL_MODS_FOUND.addAll(illegalMods);
+            LOGGER.warn("Century Security: Found " + illegalMods.size() + " unauthorized mods. Access to server will be locked.");
+        } else {
+            LOGGER.info("Century Janitor: Client verified secure.");
+        }
+    }
+
+        private boolean isAllowed(String id) {
+        String sid = id.toLowerCase();
+        if (sid.startsWith("fabric") || sid.startsWith("lib") || sid.startsWith("org_") || 
+            sid.startsWith("com_") || sid.startsWith("net_") || sid.startsWith("io_") || 
+            sid.startsWith("c2me") || sid.contains("language") || sid.contains("kotlin") || 
+            sid.contains("runtime") || sid.equals("mixinsquared") || sid.equals("trender") || 
+            sid.equals("transition")) {
+            return true;
+        }
+        return ALLOWED_MODS.contains(sid);
+    }
+}

@@ -1,0 +1,34 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.century.civilization.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ScreenAccessor",
+    "IdentityHackMixin",
+    "PackRepositoryMixin",
+    "BiomeManagerMixin",
+    "ItemEntityMixin"
+  ],
+  "client": [
+    "TitleScreenMixin",
+    "LogoRendererMixin",
+    "SplashRendererMixin",
+    "MinecraftClientMixin",
+    "PauseScreenMixin",
+    "KeyboardMixin",
+    "OptionsMixin",
+    "ToastManagerMixin",
+    "InitializationDataMixin",
+    "PigRenderStateMixin",
+    "PigRendererMixin",
+    "HudMixin",
+    "ClientLevelMixin",
+    "LocalPlayerMixin",
+    "ClientInputMixin",
+    "MouseHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

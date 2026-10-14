@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "century-civilization",
+  "version": "${version}",
+  "name": "Century Civilization",
+  "description": "Century Civilization Official Mod.",
+  "authors": [
+    "Century Civilization Team"
+  ],
+  "contact": {
+    "homepage": "https://century.net",
+    "sources": "https://github.com/century/century-civilization-mod"
+  },
+  "license": "MIT",
+  "icon": "assets/century/textures/gui/logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.century.civilization.CenturyMod"
+    ],
+    "client": [
+      "com.century.civilization.client.CenturyModClient"
+    ],
+    "preLaunch": [
+      "com.century.civilization.JanitorPreLaunch"
+    ]
+  },
+  "mixins": [
+    "century-civilization.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~26.2",
+    "java": ">=25"
+  }
+}
