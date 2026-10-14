@@ -175,12 +175,12 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "client.impact.Impact"
     };
 
-    // Strict list of allowed top/second-level package structures inside mod jars
-    // Strict list of allowed top/second-level package structures inside mod jars
-                private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
+        // Strict list of allowed top/second-level package structures inside mod jars
+    private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
         "by/gdev",
         "ca/fxco",
         "carpet",
+        "ch/endte",
         "com/dripps",
         "com/logisticscraft",
         "com/misterpemodder",
@@ -197,6 +197,7 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "kroppeb/stareval",
         "malte0811/ferritecore",
         "me/cortex",
+        "me/fallenbreath",
         "me/pepperbell",
         "me/shedaniel",
         "net/caffeinemc",
@@ -204,7 +205,8 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "net/irisshaders",
         "org/apache",
         "org/tlauncher",
-        "util"
+        "util",
+        "xaero"
     ));
 
     private static volatile boolean cachedIsClean = true;
