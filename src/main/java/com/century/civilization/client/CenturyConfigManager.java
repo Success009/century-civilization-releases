@@ -102,7 +102,8 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("itemscroller", "Item Scroller", "Technical", "itemscroller-fabric-26.2-0.32.2.jar", false, "Inventory scrolling", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("tweakermore", "TweakerMore", "Technical", "tweakermore-v3.33.2-mc26.2.jar", false, "Technical tweaks", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("devtools", "Dev Tweaks", "Technical", "devtools-without-debug.jar", false, "Developer utilities", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.2-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
+                MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.2-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("tweakeroo", "Tweakeroo", "Technical", "tweakeroo-fabric-26.2-0.29.5.jar", false, "Configurable gameplay tweaks", List.of("malilib")));
 
         DEPENDENCIES.put("cloth-config", new DependencyMod("cloth-config", "cloth-config-26.2.155.jar"));
         DEPENDENCIES.put("yacl", new DependencyMod("yacl", "yet_another_config_lib_v3-3.9.5+26.2-fabric.jar"));
