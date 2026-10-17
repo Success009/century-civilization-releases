@@ -104,7 +104,7 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("minihud", "MiniHUD", "Technical", "minihud-fabric-26.3-0.41.2.jar", false, "F3 info overlays", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("itemscroller", "Item Scroller", "Technical", "itemscroller-fabric-26.3-0.33.1.jar", false, "Inventory scrolling", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("tweakermore", "TweakerMore", "Technical", "tweakermore-v3.33.3-beta.1-mc26.3.jar", false, "Technical tweaks", List.of("malilib")));
-        MOD_ENTRIES.add(new ModEntry("devtools", "Dev Tweaks", "Technical", "devtools-without-debug.jar", false, "Developer utilities", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("devtools", "Dev Tweaks", "Technical", "devtweaks-lite-1.0.0.jar", false, "Developer utilities", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.3-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("tweakeroo", "Tweakeroo", "Technical", "tweakeroo-fabric-26.3-0.30.1.jar", false, "Configurable gameplay tweaks", List.of("malilib")));
 
