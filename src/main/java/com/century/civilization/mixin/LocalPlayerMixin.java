@@ -18,14 +18,7 @@ public abstract class LocalPlayerMixin extends AbstractClientPlayer {
         super(level, profile);
     }
 
-    @Inject(method = "drop", at = @At("HEAD"))
-    private void onDrop(boolean fullStack, CallbackInfoReturnable<Boolean> cir) {
-        ItemStack held = this.getMainHandItem();
-        ItemStack offhand = this.getOffhandItem();
-        if ((held != null && held.is(Items.NETHER_STAR)) || (offhand != null && offhand.is(Items.NETHER_STAR))) {
-            NetherStarSacrificeCutscene.recordToss();
-        }
-    }
+
 
     @Inject(method = "applyInput", at = @At("HEAD"), cancellable = true)
     private void onApplyInput(CallbackInfo ci) {

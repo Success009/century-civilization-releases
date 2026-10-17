@@ -25,6 +25,7 @@
     "HudMixin",
     "ClientLevelMixin",
     "LocalPlayerMixin",
+    "MultiPlayerGameModeMixin",
     "ClientInputMixin",
     "MouseHandlerMixin"
   ],
