@@ -32,7 +32,7 @@ public class CenturyConfigManager {
             .followRedirects(HttpClient.Redirect.ALWAYS)
             .build();
 
-    public static class ModEntry {
+        public static class ModEntry {
         public final String id;
         public final String name;
         public final String category;
@@ -40,17 +40,23 @@ public class CenturyConfigManager {
         public final boolean defaultState;
         public final String description;
         public final List<String> dependencies;
+        public final boolean isCompatible;
         public boolean enabled;
 
         public ModEntry(String id, String name, String category, String jarName, boolean defaultState, String description, List<String> dependencies) {
+            this(id, name, category, jarName, defaultState, description, dependencies, true);
+        }
+
+        public ModEntry(String id, String name, String category, String jarName, boolean defaultState, String description, List<String> dependencies, boolean isCompatible) {
             this.id = id;
             this.name = name;
             this.category = category;
             this.jarName = jarName;
-            this.defaultState = defaultState;
+            this.isCompatible = isCompatible;
+            this.defaultState = isCompatible && defaultState;
             this.description = description;
             this.dependencies = dependencies;
-            this.enabled = defaultState;
+            this.enabled = isCompatible && defaultState;
         }
     }
 
@@ -79,7 +85,7 @@ public class CenturyConfigManager {
                                 // --- Recommended / Native (Enabled by default) ---
         MOD_ENTRIES.add(new ModEntry("sodium", "Sodium", "Recommended / Native", "sodium-fabric-0.9.2+mc26.3.jar", true, "Rendering engine", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("bobby", "Extended Render (Bobby)", "Recommended / Native", "bobby-5.2.16+mc26.3.jar", true, "Render distance extension", List.of("cloth-config")));
-        MOD_ENTRIES.add(new ModEntry("pingdisplay", "Ping Display", "Recommended / Native", "ping-display-26.2.jar", true, "Render ping as milliseconds", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("pingdisplay", "Ping Display", "Recommended / Native", "ping-display-26.2.jar", false, "Render ping as milliseconds", Collections.emptyList(), false));
         MOD_ENTRIES.add(new ModEntry("shulkerboxtooltip", "Shulker Box Tooltip", "Recommended / Native", "shulkerboxtooltip-fabric-5.4.2+26.3.jar", true, "Shulker box contents preview", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("continuity", "Continuity", "Recommended / Native", "continuity-3.0.1+26.3.jar", true, "Connected textures support", Collections.emptyList()));
 
@@ -90,10 +96,10 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("ferritecore", "FerriteCore", "Additional", "ferritecore-9.0.0-fabric.jar", false, "Memory optimization", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("lithium", "Lithium", "Additional", "lithium-fabric-0.26.2+mc26.3.jar", false, "Physics optimizer", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("moreculling", "More Culling", "Additional", "moreculling-fabric-26.3-1.9.0.jar", false, "Block face culling", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("voxy", "Voxy", "Additional", "voxy-0.2.18-beta.jar", false, "Voxel LOD rendering engine", List.of("sodium")));
+        MOD_ENTRIES.add(new ModEntry("voxy", "Voxy", "Additional", "voxy-0.2.18-beta.jar", false, "Voxel LOD rendering engine", List.of("sodium"), false));
         MOD_ENTRIES.add(new ModEntry("iris", "Iris Shaders", "Additional", "iris-fabric-1.11.7+mc26.3.jar", false, "Shaders support", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("voxyserver", "Voxy Server", "Additional", "VoxyServer-1.2.4-26.2.jar", false, "Voxy server-side LOD support", List.of("voxy")));
+        MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList(), false));
+        MOD_ENTRIES.add(new ModEntry("voxyserver", "Voxy Server", "Additional", "VoxyServer-1.2.4-26.2.jar", false, "Voxy server-side LOD support", List.of("voxy"), false));
         MOD_ENTRIES.add(new ModEntry("doabarrelroll", "Do a Barrel Roll", "Additional", "do_a_barrel_roll-fabric-3.8.5+26.3.jar", false, "Flight simulator physics for elytra", List.of("cicada", "yacl")));
         MOD_ENTRIES.add(new ModEntry("scalablelux", "ScalableLux", "Additional", "ScalableLux-fabric-mc26.3-0.3.0-alpha.0.6-all.jar", false, "Light engine optimizer", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("krypton", "Krypton", "Additional", "krypton-0.3.2.jar", false, "Network stack optimizer", Collections.emptyList()));
@@ -201,6 +207,15 @@ public class CenturyConfigManager {
                         }
                     }
                 }
+                for (ModEntry entry : MOD_ENTRIES) {
+                    if (!entry.isCompatible) {
+                        Path inMods = modsDir.resolve(entry.jarName);
+                        if (Files.exists(inMods)) {
+                            Path inBunker = bunkerDir.resolve(entry.jarName);
+                            safeMoveToBunker(inMods, inBunker, modsDir, entry.jarName);
+                        }
+                    }
+                }
             }
         } catch (Throwable t) {}
 
@@ -209,9 +224,14 @@ public class CenturyConfigManager {
             if (Files.exists(configFile)) {
                 String jsonStr = Files.readString(configFile, StandardCharsets.UTF_8);
                 JsonObject json = JsonParser.parseString(jsonStr).getAsJsonObject();
-                if (json.has("toggles")) {
+                                if (json.has("toggles")) {
                     JsonObject toggles = json.getAsJsonObject("toggles");
                     for (ModEntry entry : MOD_ENTRIES) {
+                        if (!entry.isCompatible) {
+                            entry.enabled = false;
+                            USER_TOGGLES.put(entry.id, false);
+                            continue;
+                        }
                         if (toggles.has(entry.id)) {
                             entry.enabled = toggles.get(entry.id).getAsBoolean();
                             USER_TOGGLES.put(entry.id, entry.enabled);
@@ -222,7 +242,12 @@ public class CenturyConfigManager {
                 }
             } else {
                 for (ModEntry entry : MOD_ENTRIES) {
-                    USER_TOGGLES.put(entry.id, entry.defaultState);
+                    if (!entry.isCompatible) {
+                        entry.enabled = false;
+                        USER_TOGGLES.put(entry.id, false);
+                    } else {
+                        USER_TOGGLES.put(entry.id, entry.defaultState);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -265,6 +290,9 @@ public class CenturyConfigManager {
 
                 Set<String> activeDependencyIds = new HashSet<>();
                 for (ModEntry entry : MOD_ENTRIES) {
+                    if (!entry.isCompatible) {
+                        entry.enabled = false;
+                    }
                     if (entry.enabled) {
                         activeDependencyIds.addAll(entry.dependencies);
                     }
@@ -274,10 +302,13 @@ public class CenturyConfigManager {
                 boolean changesMade = false;
 
                 for (ModEntry entry : MOD_ENTRIES) {
+                    if (!entry.isCompatible) {
+                        entry.enabled = false;
+                    }
                     Path modPathInMods = modsDir.resolve(entry.jarName);
                     Path modPathInBunker = bunkerDir.resolve(entry.jarName);
 
-                    if (entry.enabled) {
+                    if (entry.enabled && entry.isCompatible) {
                         if (Files.exists(modPathInBunker) && !Files.exists(modPathInMods)) {
                             if (safeMoveToMods(modPathInBunker, modPathInMods, modsDir, entry.jarName)) {
                                 changesMade = true;
@@ -409,7 +440,13 @@ public class CenturyConfigManager {
     }
 
     private static void downloadModFile(String jarName, Path targetFile) throws Exception {
-                String urlStr = GITHUB_MODS_BASE_URL + jarName;
+        for (ModEntry entry : MOD_ENTRIES) {
+            if (entry.jarName.equals(jarName) && !entry.isCompatible) {
+                LOGGER.warn("Blocked download of incompatible mod: " + jarName);
+                return;
+            }
+        }
+        String urlStr = GITHUB_MODS_BASE_URL + jarName;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlStr))

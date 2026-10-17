@@ -82,17 +82,22 @@ public class CenturyConfigScreen extends Screen {
             int itemY = cardY + 32 + (row * 22);
             int btnX = col == 0 ? (cardX + 155) : (cardX + 348);
 
-            final CenturyConfigManager.ModEntry currentEntry = entry;
+                        final CenturyConfigManager.ModEntry currentEntry = entry;
+            String btnLabel = !currentEntry.isCompatible ? "§8N/A" : (currentEntry.enabled ? "§aON" : "§cOFF");
             Button toggleBtn = Button.builder(
-                Component.literal(entry.enabled ? "§aON" : "§cOFF"),
+                Component.literal(btnLabel),
                 (b) -> {
-                    currentEntry.enabled = !currentEntry.enabled;
-                    b.setMessage(Component.literal(currentEntry.enabled ? "§aON" : "§cOFF"));
+                    if (currentEntry.isCompatible) {
+                        currentEntry.enabled = !currentEntry.enabled;
+                        b.setMessage(Component.literal(currentEntry.enabled ? "§aON" : "§cOFF"));
+                        CenturyConfigManager.setRestartRequired(true);
+                    }
                 }
             )
             .bounds(btnX, itemY + 2, 40, 16)
             .build();
-
+            
+            toggleBtn.active = currentEntry.isCompatible; // Disable button if not compatible
             this.addRenderableWidget(toggleBtn);
         }
 
@@ -234,11 +239,13 @@ public class CenturyConfigScreen extends Screen {
                 int textX = col == 0 ? (cardX + 14) : (cardX + 210);
                 int maxTextWidth = col == 0 ? 135 : 132;
 
-                String titleText = truncate("§f" + (i + 1) + ". " + entry.name, maxTextWidth);
-                context.text(this.font, titleText, textX, itemY + 2, 0xFFFFFFFF);
+                int titleColor = entry.isCompatible ? 0xFFFFFFFF : 0xFF888888;
+                String titleText = truncate((entry.isCompatible ? "§f" : "§7") + (i + 1) + ". " + entry.name, maxTextWidth);
+                context.text(this.font, titleText, textX, itemY + 2, titleColor);
 
-                String descText = truncate("§8" + entry.description, maxTextWidth);
-                context.text(this.font, descText, textX, itemY + 11, 0xFFAAAAAA);
+                int descColor = entry.isCompatible ? 0xFFAAAAAA : 0xFFAA5555;
+                String descText = truncate(entry.isCompatible ? ("§8" + entry.description) : "§cAwaiting 26.3 update", maxTextWidth);
+                context.text(this.font, descText, textX, itemY + 11, descColor);
             }
 
             if (totalPages > 1) {
