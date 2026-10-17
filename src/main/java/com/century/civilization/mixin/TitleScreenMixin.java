@@ -104,7 +104,7 @@ public class TitleScreenMixin extends Screen {
         int halfWidth = (btnWidth - 4) / 2;
 
         this.optionsButton = this.addRenderableWidget(Button.builder(Component.literal("Options"), (b) -> {
-            this.minecraft.setScreenAndShow(new OptionsScreen(this, this.minecraft.options, false));
+            this.minecraft.setScreenAndShow(new OptionsScreen(this, this.minecraft.options));
         })
         .bounds(fieldX, centerY + 38, halfWidth, 20)
         .build());

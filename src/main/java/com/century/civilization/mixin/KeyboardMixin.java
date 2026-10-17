@@ -14,7 +14,7 @@ public class KeyboardMixin {
     @Inject(method = "keyPress", at = @At("HEAD"), cancellable = true)
     private void onKeyPress(long window, int action, net.minecraft.client.input.KeyEvent event, CallbackInfo ci) {
         if (com.century.civilization.feature.NetherStarSacrificeCutscene.isInputLocked()) {
-            if (event.key() != org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+            if (event.key() != 256 /* GLFW_KEY_ESCAPE */) {
                 ci.cancel();
                 return;
             }

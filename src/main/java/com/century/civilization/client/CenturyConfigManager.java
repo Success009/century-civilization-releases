@@ -76,41 +76,43 @@ public class CenturyConfigManager {
     private static volatile boolean isDownloading = false;
 
     static {
-                        // --- Recommended / Native (Enabled by default) ---
-        MOD_ENTRIES.add(new ModEntry("sodium", "Sodium", "Recommended / Native", "sodium-fabric-0.9.1+mc26.2.jar", true, "Rendering engine", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("bobby", "Extended Render (Bobby)", "Recommended / Native", "bobby-5.2.15+mc26.2.jar", true, "Render distance extension", List.of("cloth-config")));
+                                // --- Recommended / Native (Enabled by default) ---
+        MOD_ENTRIES.add(new ModEntry("sodium", "Sodium", "Recommended / Native", "sodium-fabric-0.9.2+mc26.3.jar", true, "Rendering engine", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("bobby", "Extended Render (Bobby)", "Recommended / Native", "bobby-5.2.16+mc26.3.jar", true, "Render distance extension", List.of("cloth-config")));
         MOD_ENTRIES.add(new ModEntry("pingdisplay", "Ping Display", "Recommended / Native", "ping-display-26.2.jar", true, "Render ping as milliseconds", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("shulkerboxtooltip", "Shulker Box Tooltip", "Recommended / Native", "shulkerboxtooltip-fabric-5.4.0+26.2.jar", true, "Shulker box contents preview", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("continuity", "Continuity", "Recommended / Native", "continuity-3.0.1+26.2.jar", true, "Connected textures support", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("shulkerboxtooltip", "Shulker Box Tooltip", "Recommended / Native", "shulkerboxtooltip-fabric-5.4.2+26.3.jar", true, "Shulker box contents preview", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("continuity", "Continuity", "Recommended / Native", "continuity-3.0.1+26.3.jar", true, "Connected textures support", Collections.emptyList()));
 
         // --- Additional (Disabled by default) ---
-        MOD_ENTRIES.add(new ModEntry("voicechat", "Voice Chat", "Additional", "voicechat-fabric-2.6.21+26.2.jar", false, "Proximity voice chat", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("zoomify", "Zoomify", "Additional", "zoomify-2.16.1+26.2.jar", false, "Camera zoom", List.of("cloth-config", "yacl", "kotlin")));
-        MOD_ENTRIES.add(new ModEntry("entityculling", "Entity Culling", "Additional", "entityculling-fabric-1.10.5-mc26.2.jar", false, "Entity culling", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("voicechat", "Voice Chat", "Additional", "voicechat-fabric-2.6.24+26.3.jar", false, "Proximity voice chat", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("zoomify", "Zoomify", "Additional", "zoomify-2.17.0+mc26.3-universal.jar", false, "Camera zoom", List.of("cloth-config", "yacl", "kotlin")));
+        MOD_ENTRIES.add(new ModEntry("entityculling", "Entity Culling", "Additional", "entityculling-fabric-1.11.3-mc26.3.jar", false, "Entity culling", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("ferritecore", "FerriteCore", "Additional", "ferritecore-9.0.0-fabric.jar", false, "Memory optimization", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("lithium", "Lithium", "Additional", "lithium-fabric-0.25.2+mc26.2.jar", false, "Physics optimizer", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("moreculling", "More Culling", "Additional", "moreculling-fabric-26.2-1.8.1.jar", false, "Block face culling", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("lithium", "Lithium", "Additional", "lithium-fabric-0.26.2+mc26.3.jar", false, "Physics optimizer", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("moreculling", "More Culling", "Additional", "moreculling-fabric-26.3-1.9.0.jar", false, "Block face culling", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("voxy", "Voxy", "Additional", "voxy-0.2.18-beta.jar", false, "Voxel LOD rendering engine", List.of("sodium")));
-        MOD_ENTRIES.add(new ModEntry("iris", "Iris Shaders", "Additional", "iris-fabric-1.11.2+mc26.2.jar", false, "Shaders support", Collections.emptyList()));
-                MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("iris", "Iris Shaders", "Additional", "iris-fabric-1.11.7+mc26.3.jar", false, "Shaders support", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("tlskincape", "TLauncher Skin Cape", "Additional", "tl_skin_cape_fabric_26.2-1.39.jar", false, "Custom skins and capes", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("voxyserver", "Voxy Server", "Additional", "VoxyServer-1.2.4-26.2.jar", false, "Voxy server-side LOD support", List.of("voxy")));
-        MOD_ENTRIES.add(new ModEntry("doabarrelroll", "Do a Barrel Roll", "Additional", "do_a_barrel_roll-fabric-3.8.4+26.2.jar", false, "Flight simulator physics for elytra", List.of("cicada", "yacl")));
+        MOD_ENTRIES.add(new ModEntry("doabarrelroll", "Do a Barrel Roll", "Additional", "do_a_barrel_roll-fabric-3.8.5+26.3.jar", false, "Flight simulator physics for elytra", List.of("cicada", "yacl")));
+        MOD_ENTRIES.add(new ModEntry("scalablelux", "ScalableLux", "Additional", "ScalableLux-fabric-mc26.3-0.3.0-alpha.0.6-all.jar", false, "Light engine optimizer", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("krypton", "Krypton", "Additional", "krypton-0.3.2.jar", false, "Network stack optimizer", Collections.emptyList()));
 
         // --- Technical (Disabled by default) ---
-        MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Technical", "litematica-fabric-26.2-0.28.8.jar", false, "Schematic viewer", List.of("malilib")));
-        MOD_ENTRIES.add(new ModEntry("syncmatica", "Syncmatica", "Technical", "syncmatica-fabric-26.2-0.3.20.jar", false, "Shared schematics", List.of("malilib")));
-        MOD_ENTRIES.add(new ModEntry("minihud", "MiniHUD", "Technical", "minihud-fabric-26.2-0.40.7.jar", false, "F3 info overlays", List.of("malilib")));
-        MOD_ENTRIES.add(new ModEntry("itemscroller", "Item Scroller", "Technical", "itemscroller-fabric-26.2-0.32.2.jar", false, "Inventory scrolling", List.of("malilib")));
-        MOD_ENTRIES.add(new ModEntry("tweakermore", "TweakerMore", "Technical", "tweakermore-v3.33.2-mc26.2.jar", false, "Technical tweaks", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("litematica", "Litematica", "Technical", "litematica-fabric-26.3-0.29.1.jar", false, "Schematic viewer", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("syncmatica", "Syncmatica", "Technical", "syncmatica-fabric-26.3-0.3.20.jar", false, "Shared schematics", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("minihud", "MiniHUD", "Technical", "minihud-fabric-26.3-0.41.2.jar", false, "F3 info overlays", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("itemscroller", "Item Scroller", "Technical", "itemscroller-fabric-26.3-0.33.1.jar", false, "Inventory scrolling", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("tweakermore", "TweakerMore", "Technical", "tweakermore-v3.33.3-beta.1-mc26.3.jar", false, "Technical tweaks", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("devtools", "Dev Tweaks", "Technical", "devtools-without-debug.jar", false, "Developer utilities", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.2-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("tweakeroo", "Tweakeroo", "Technical", "tweakeroo-fabric-26.2-0.29.5.jar", false, "Configurable gameplay tweaks", List.of("malilib")));
+        MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.3-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("tweakeroo", "Tweakeroo", "Technical", "tweakeroo-fabric-26.3-0.30.1.jar", false, "Configurable gameplay tweaks", List.of("malilib")));
 
-        DEPENDENCIES.put("cicada", new DependencyMod("cicada", "cicada-lib-0.15.3+26.2.jar"));
-        DEPENDENCIES.put("cloth-config", new DependencyMod("cloth-config", "cloth-config-26.2.155.jar"));
-        DEPENDENCIES.put("yacl", new DependencyMod("yacl", "yet_another_config_lib_v3-3.9.5+26.2-fabric.jar"));
-        DEPENDENCIES.put("kotlin", new DependencyMod("kotlin", "fabric-language-kotlin-1.13.13+kotlin.2.4.10.jar"));
-        DEPENDENCIES.put("malilib", new DependencyMod("malilib", "malilib-fabric-26.2-0.29.6.jar"));
+        DEPENDENCIES.put("cicada", new DependencyMod("cicada", "cicada-lib-0.15.3+26.3.jar"));
+        DEPENDENCIES.put("cloth-config", new DependencyMod("cloth-config", "cloth-config-fabric-26.3.159.jar"));
+        DEPENDENCIES.put("yacl", new DependencyMod("yacl", "yet_another_config_lib_v3-3.9.7+26.3-fabric.jar"));
+        DEPENDENCIES.put("kotlin", new DependencyMod("kotlin", "fabric-language-kotlin-1.14.2+kotlin.2.4.21.jar"));
+        DEPENDENCIES.put("malilib", new DependencyMod("malilib", "malilib-fabric-26.3-0.30.2.jar"));
     }
 
     public static List<String> getCategories() {

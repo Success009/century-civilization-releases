@@ -44,8 +44,7 @@ public class TechnoCrownFeatureRenderer<S extends LivingEntityRenderState, RM ex
                     RenderTypes.entityCutout(this.TEXTURE_BABY),
                     i,
                     OverlayTexture.NO_OVERLAY,
-                    state.outlineColor,
-                    null
+                    state.outlineColor
                 );
             } else {
                 collector.submitModel(
@@ -55,8 +54,7 @@ public class TechnoCrownFeatureRenderer<S extends LivingEntityRenderState, RM ex
                     RenderTypes.entityCutout(this.TEXTURE_ADULT),
                     i,
                     OverlayTexture.NO_OVERLAY,
-                    state.outlineColor,
-                    null
+                    state.outlineColor
                 );
             }
         }

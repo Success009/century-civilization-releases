@@ -179,6 +179,7 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
     private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
                 "by/gdev",
         "ca/fxco",
+        "ca/spottedleaf",
         "carpet",
         "ch/endte",
         "com/bawnorton",
@@ -202,6 +203,7 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "me/lucko",
         "me/pepperbell",
         "me/shedaniel",
+        "me/steinborn",
         "net/caffeinemc",
         "net/fabricmc",
         "net/irisshaders",
