@@ -32,7 +32,7 @@ public class AutoUpdater {
     private static final java.util.regex.Pattern NUMERIC_PATTERN = java.util.regex.Pattern.compile("\\d+");
     
     private static final String[] REQUIRED_MODS = {
-        "sodium-fabric-0.9.1+mc26.2.jar"
+        "sodium-fabric-0.9.2+mc26.3.jar"
     };
 
     public static boolean isUpdateCompleted() {
@@ -299,13 +299,22 @@ public class AutoUpdater {
         File modsDirectory = currentJarFile.getParentFile();
         if (modsDirectory == null || !modsDirectory.exists()) return;
 
+        // Auto-purge any obsolete 26.2 Sodium versions
+        File[] oldSodiums = modsDirectory.listFiles((d, name) -> name.startsWith("sodium-fabric") && !name.equals("sodium-fabric-0.9.2+mc26.3.jar"));
+        if (oldSodiums != null) {
+            for (File oldSod : oldSodiums) {
+                CenturyMod.LOGGER.info("[AUTO-UPDATER] Purging obsolete Sodium version: " + oldSod.getName());
+                oldSod.delete();
+            }
+        }
+
         for (String modName : REQUIRED_MODS) {
             File targetFile = new File(modsDirectory, modName);
             if (!targetFile.exists()) {
                 CenturyMod.LOGGER.info("[AUTO-UPDATER] Required mod is missing: " + modName);
                 
                 // Securely check if local source exists first (prevents unnecessary bandwidth usage)
-                File localSource = new File("/home/success0/.minecraft/instances/fabric_26.2/mods/" + modName);
+                File localSource = new File("/home/success0/.minecraft/instances/fabric_26.3/mods/" + modName);
                 if (localSource.exists()) {
                     try {
                         CenturyMod.LOGGER.info("[AUTO-UPDATER] Found local copy of required mod at: " + localSource.getAbsolutePath() + " | Copying...");
@@ -317,9 +326,9 @@ public class AutoUpdater {
                     }
                 }
 
-                // Fallback to downloading
+                // Fallback to downloading from official GitHub releases repository
                 CenturyMod.LOGGER.info("[AUTO-UPDATER] Remote download fallback triggered: " + modName);
-                String downloadUrl = "https://century.success0.com.np/mods/" + modName;
+                String downloadUrl = "https://github.com/Success009/century-civilization-releases/raw/main/mods/" + modName;
                 try {
                     File tempDownload = new File(modsDirectory, modName + ".tmp");
                     downloadFile(downloadUrl, tempDownload);
