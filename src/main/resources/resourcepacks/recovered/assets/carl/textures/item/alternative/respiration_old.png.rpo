@@ -1,4 +1,0 @@
-{
-    condition: "recovered.animatedCategory.respiration.old",
-    fallback: "assets/carl/textures/item/not_animated/respiration.png"
-}
