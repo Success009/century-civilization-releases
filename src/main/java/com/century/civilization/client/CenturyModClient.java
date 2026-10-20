@@ -38,7 +38,7 @@ public class CenturyModClient implements ClientModInitializer {
     public static final String PROXY_IP = "129.154.249.65";
     public static final int PROXY_PORT = 25565;
     public static final String CREATIVE_IP = "justtest.enderman.cloud";
-    public static final int CREATIVE_PORT = 50001;
+    public static final int CREATIVE_PORT = 25565;
     public static final String API_BASE_URL = "https://century.success0.com.np";
 
     public enum ConnectionMode {
@@ -526,9 +526,9 @@ public class CenturyModClient implements ClientModInitializer {
         }
 
         Minecraft client = Minecraft.getInstance();
-        ServerAddress serverAddress = new ServerAddress(host, port);
+        ServerAddress serverAddress = (port == 25565) ? ServerAddress.parseString(host) : new ServerAddress(host, port);
         ServerData serverData = new ServerData(serverName, "century.internal.gateway", ServerData.Type.REALM);
-        LOGGER.info("Initiating secure connection...");
+        LOGGER.info("Initiating secure connection to " + host + ":" + port + "...");
         ConnectScreen.startConnecting(parent, client, serverAddress, serverData, true, null);
     }
 }
