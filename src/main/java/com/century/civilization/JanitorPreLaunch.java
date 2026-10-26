@@ -175,17 +175,19 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "client.impact.Impact"
     };
 
-        // Strict list of allowed top/second-level package structures inside mod jars
+                // Strict list of allowed top/second-level package structures inside mod jars
     private static final Set<String> ALLOWED_PACKAGES = new HashSet<>(Arrays.asList(
-                "by/gdev",
+        "by/gdev",
         "ca/fxco",
         "ca/spottedleaf",
         "carpet",
         "ch/endte",
+        "cl/eye",
         "com/bawnorton",
         "com/dripps",
         "com/logisticscraft",
         "com/misterpemodder",
+        "com/moulberry",
         "com/pepperbell",
         "com/spunkyinsaan",
         "com/success0",
@@ -196,6 +198,7 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "dev/tr7zw",
         "dev/zelo",
         "fi/dy",
+        "imgui/moulberry90",
         "kroppeb/stareval",
         "malte0811/ferritecore",
         "me/cortex",
@@ -209,6 +212,7 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
         "net/irisshaders",
         "nl/enjarai",
         "org/apache",
+        "org/bytedeco",
         "org/tlauncher",
         "org/yaml",
         "util",
@@ -308,9 +312,9 @@ public class JanitorPreLaunch implements PreLaunchEntrypoint {
                             if (ourJarFile != null && canonicalFile.equals(ourJarFile)) {
                                 continue; // Skip our own mod jar
                             }
-                            String nameLower = f.getName().toLowerCase();
-                            if (nameLower.startsWith("centurycivilization") || nameLower.startsWith("centorycivilization")) {
-                                continue; // Skip our own mod regardless of filename
+                                                        String nameLower = f.getName().toLowerCase();
+                            if (nameLower.startsWith("centurycivilization") || nameLower.startsWith("centorycivilization") || nameLower.startsWith("flashback")) {
+                                continue; // Skip our own mod and officially approved large mods
                             }
 
                             // Verify every class inside the JAR against library whitelist
