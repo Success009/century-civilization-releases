@@ -111,7 +111,8 @@ public class CenturyConfigManager {
         MOD_ENTRIES.add(new ModEntry("itemscroller", "Item Scroller", "Technical", "itemscroller-fabric-26.3-0.33.1.jar", false, "Inventory scrolling", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("tweakermore", "TweakerMore", "Technical", "tweakermore-v3.33.3-beta.1-mc26.3.jar", false, "Technical tweaks", List.of("malilib")));
         MOD_ENTRIES.add(new ModEntry("devtools", "Dev Tweaks", "Technical", "devtweaks-lite-1.0.0.jar", false, "Developer utilities", Collections.emptyList()));
-        MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.3-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
+                MOD_ENTRIES.add(new ModEntry("xaerominimap", "Xaero's Minimap", "Technical", "xaerominimap-fabric-26.3-26.6.0.jar", false, "Minimap & radar", Collections.emptyList()));
+        MOD_ENTRIES.add(new ModEntry("flashback", "Flashback", "Additional", "Flashback-0.43.6-for-MC26.3.jar", false, "Record gameplay & export cinematics", Collections.emptyList()));
         MOD_ENTRIES.add(new ModEntry("tweakeroo", "Tweakeroo", "Technical", "tweakeroo-fabric-26.3-0.30.1.jar", false, "Configurable gameplay tweaks", List.of("malilib")));
 
         DEPENDENCIES.put("cicada", new DependencyMod("cicada", "cicada-lib-0.15.3+26.3.jar"));
@@ -446,7 +447,7 @@ public class CenturyConfigManager {
                 return;
             }
         }
-        String urlStr = GITHUB_MODS_BASE_URL + jarName;
+                String urlStr = GITHUB_MODS_BASE_URL + jarName;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(urlStr))
@@ -456,15 +457,31 @@ public class CenturyConfigManager {
 
         HttpResponse<InputStream> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
         if (response.statusCode() != 200) {
-            throw new java.io.IOException("HTTP error " + response.statusCode() + " downloading " + jarName + " from " + urlStr);
+            // Fallback to GitHub Releases download for large assets (e.g. Flashback >100MB)
+            String fallbackUrl = "https://github.com/Success009/century-civilization-releases/releases/download/mods-assets/" + jarName;
+            request = HttpRequest.newBuilder()
+                    .uri(URI.create(fallbackUrl))
+                    .header("User-Agent", "CenturyCivilization-Client")
+                    .GET()
+                    .build();
+            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            if (response.statusCode() != 200) {
+                throw new java.io.IOException("HTTP error " + response.statusCode() + " downloading " + jarName + " from " + urlStr + " and " + fallbackUrl);
+            }
         }
 
+        long contentLength = response.headers().firstValueAsLong("Content-Length").orElse(-1L);
         try (InputStream in = new BufferedInputStream(response.body());
              FileOutputStream out = new FileOutputStream(targetFile.toFile())) {
-            byte[] buffer = new byte[8192];
+            byte[] buffer = new byte[65536];
             int bytesRead;
+            long totalRead = 0;
             while ((bytesRead = in.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
+                totalRead += bytesRead;
+                if (contentLength > 0) {
+                    downloadProgress = Math.min(1.0f, (float) totalRead / contentLength);
+                }
             }
         }
     }
