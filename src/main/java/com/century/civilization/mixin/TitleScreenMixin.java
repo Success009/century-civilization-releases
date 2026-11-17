@@ -227,7 +227,27 @@ public class TitleScreenMixin extends Screen {
             return true;
         }
         return super.charTyped(event);
+            }
+
+    @Override
+    public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        if (CenturyModClient.isLoggedIn() && event.button() == 0) {
+            // Avatar: 36x36 at (px + pw - 42, py + 3) with px = width - 130, py = 10, pw = 120
+            int ax = (this.width - 130) + 120 - 42;
+            int ay = 10 + 3;
+            if (event.x() >= ax && event.x() < ax + 36 && event.y() >= ay && event.y() < ay + 36) {
+                if (!com.century.civilization.client.skin.SkinPicker.isBusy()) {
+                    net.minecraft.client.Minecraft.getInstance().getSoundManager().play(
+                            net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(
+                                    net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                    com.century.civilization.client.skin.SkinPicker.pickAndUpload();
+                }
+                return true;
+            }
+        }
+        return super.mouseClicked(event, doubleClick);
     }
+
     @Inject(at = @At("HEAD"), method = "extractRenderState")
     private void onDrawBackground(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         // Draw the main solid onyx screen background
@@ -352,11 +372,39 @@ public class TitleScreenMixin extends Screen {
             context.text(this.font, "§e" + dispName, px + 6, py + 8, 0xFFFFFFFF, false);
             context.text(this.font, "§7Role: §b" + CenturyModClient.getUserRole().toUpperCase(), px + 6, py + 22, 0xFFFFFFFF, false);
 
-            // Render Player Face Region (8x8) stretched to 24x24 dynamically
-            Identifier skinId = CenturyModClient.getPlayerSkinIdentifier();
+            // Avatar: 36x36 at (px + pw - 42, py + 3), drawn from the downloaded Century skin
+            // (SkinTextures) with the old identifier as a fallback until it arrives.
+            String fullName = CenturyModClient.getAuthenticatedUsername();
+            com.century.civilization.client.skin.SkinTextures.requestLazy(fullName);
+            Identifier skinId = com.century.civilization.client.skin.SkinTextures.texture(fullName);
+            if (skinId == null) skinId = CenturyModClient.getPlayerSkinIdentifier();
+            int avX = px + pw - 42;
+            int avY = py + 3;
+            // 1 px gold frame
+            context.fill(avX - 1, avY - 1, avX + 37, avY, 0xFFD4AF37);
+            context.fill(avX - 1, avY + 36, avX + 37, avY + 37, 0xFFD4AF37);
+            context.fill(avX - 1, avY, avX, avY + 36, 0xFFD4AF37);
+            context.fill(avX + 36, avY, avX + 37, avY + 36, 0xFFD4AF37);
             if (skinId != null) {
-                context.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, skinId, px + pw - 30, py + 8, 8.0f, 8.0f, 24, 24, 8, 8, 64, 64, 0xFFFFFFFF);
+                // face, then hat layer on top
+                context.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, skinId, avX, avY, 8.0f, 8.0f, 36, 36, 8, 8, 64, 64, 0xFFFFFFFF);
+                context.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, skinId, avX, avY, 40.0f, 8.0f, 36, 36, 8, 8, 64, 64, 0xFFFFFFFF);
             }
+            // Hover overlay with the edit icon, hidden while an upload is running
+            if (mouseX >= avX && mouseX < avX + 36 && mouseY >= avY && mouseY < avY + 36
+                    && !com.century.civilization.client.skin.SkinPicker.isBusy()) {
+                context.fill(avX, avY, avX + 36, avY + 36, 0x99000000);
+                context.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
+                        Identifier.fromNamespaceAndPath("century", "textures/gui/edit_icon.png"),
+                        avX + 6, avY + 6, 0.0f, 0.0f, 24, 24, 64, 64, 64, 64, 0xDDFFFFFF);
+            }
+
+                            // Skin upload status (set by SkinPicker), right-aligned under the card buttons
+                            String skinStatus = com.century.civilization.client.skin.SkinPicker.status();
+                            if (!skinStatus.isEmpty()) {
+                                int sx = Math.max(4, this.width - 10 - this.font.width(skinStatus));
+                                context.text(this.font, skinStatus, sx, 94, com.century.civilization.client.skin.SkinPicker.statusColor(), false);
+                            }
         }
 
         // Keep active/visible states synchronized on every tick

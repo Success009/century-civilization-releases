@@ -27,8 +27,10 @@
     "LocalPlayerMixin",
     "MultiPlayerGameModeMixin",
     "ClientInputMixin",
-    "MouseHandlerMixin"
-  ],
+    "MouseHandlerMixin",
+        "PlayerInfoSkinMixin",
+        "AbstractClientPlayerSkinMixin"
+      ],
   "injectors": {
     "defaultRequire": 1
   }
